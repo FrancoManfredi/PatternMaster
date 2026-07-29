@@ -1,0 +1,77 @@
+{
+  "slug": "memento",
+  "title": "Memento",
+  "category": "COMPORTAMIENTO",
+  "categoryLabel": "Patrón de Comportamiento",
+  "difficulty": "Difícil",
+  "difficultyLevel": 3,
+  "description": "Permite capturar y restaurar el estado interno de un objeto sin violar el encapsulamiento. Útil para implementar funcionalidades de deshacer/rehacer o snapshots de estado.",
+  "codeTag": "BEHAVIORAL_08",
+  "theory": {
+    "problem": "El Problema del Estado Frágil",
+    "problemDescription": "Imagina que estás construyendo un editor de texto. El usuario quiere poder deshacer y rehacer cambios. Si intentas guardar el estado exponiendo los campos internos del objeto, rompes el encapsulamiento: cualquier clase puede modificar el estado directamente, lo que genera bugs difíciles de rastrear. El patrón Memento sugiere que crees un objeto que contenga una instantánea del estado interno del objeto, sin exponer esos detalles. Solo el objeto original (originator) puede crear y leer mementos, mientras que un caretaker almacena los mementos sin entender qué contienen.",
+    "beforeAfter": {
+      "before": "Estado Expuesto y Frágil",
+      "after": "Snapshots Seguros y Encapsulados"
+    }
+  },
+  "analogy": {
+    "title": "La Analogía de los Slots de Guardado",
+    "description": "En un videojuego, tenés slots de guardado. Cada vez que guardás, el juego crea una instantánea completa de tu estado: posición, inventario, salud, progreso. Si morís, podés cargar el último slot de guardado y volver a ese punto exacto. El juego no te pide que le digas qué cambió — simplemente restaura el estado completo. Los mementos son esos slots de guardado: copias completas del estado que podés crear y restaurar sin entender los detalles internos.",
+    "quote": "Los slots de guardado son mementos: instantáneas completas del estado que podés crear y restaurar sin entender los detalles internos."
+  },
+  "realCases": [
+    {
+      "title": "Rollback de Transacciones en Bases de Datos",
+      "description": "Las bases de datos como PostgreSQL y MySQL usan mementos internamente para implementar transacciones. Antes de ejecutar una operación, guardan un snapshot del estado. Si la transacción falla, restauran el snapshot anterior. Esto garantiza la atomicidad: o todo se aplica, o nada se aplica."
+    },
+    {
+      "title": "Deshacer/Rehacer en Editores de Texto",
+      "description": "Editores como VS Code, Photoshop o Google Docs mantienen un historial de mementos. Cada acción del usuario (escribir, borrar, formatear) crea un memento. Cuando el usuario presiona Ctrl+Z, el editor restaura el memento anterior. Cuando presiona Ctrl+Y, avanza al siguiente memento en el historial."
+    },
+    {
+      "title": "Checkpoints en Procesos Largos",
+      "description": "Los procesos de machine learning y ETL usan checkpoints periódicos para guardas snapshots del estado del proceso. Si el proceso falla a mitad de camino, no necesitan empezar desde cero: restauran el último checkpoint y continúan desde ahí."
+    }
+  ],
+  "sections": {
+    "howItWorks": {
+      "title": "¿Cómo funciona Memento?",
+      "description": "El patrón Memento se compone de tres actores principales:\n\n1. **Originator**: Es el objeto cuyo estado queremos guardar. Crea mementos con una instantánea de su estado interno y puede restaurarse a partir de un memento. El originator es el único que conoce los detalles internos del memento.\n\n2. **Memento**: Es un objeto opaco que contiene el estado interno del originator. No expone getters ni setters — solo el originador puede leer o escribir en él. Esto garantiza que el encapsulamiento no se rompa.\n\n3. **Caretaker**: Es el objeto que almacena los mementos. No conoce ni debe conocer la estructura interna del memento. Solo guarda y restaura mementos cuando se le pide. El caretaker gestiona el historial de estados.\n\nLa clave está en que el memento es opaco para el caretaker. Solo el originator puede crear y leer mementos. Esto preserva el encapsulamiento mientras permite guardar y restaurar estado.",
+      "structureCode": "// === ESTRUCTURA DEL PATRÓN MEMENTO ===\n\n// 1. Memento (objeto opaco)\nclass TextDocumentMemento {\n  constructor(\n    private readonly content: string,\n    private readonly cursorPos: number,\n    private readonly timestamp: number\n  ) {}\n\n  // Solo el originator puede acceder a estos métodos\n  getContent(): string { return this.content; }\n  getCursorPos(): number { return this.cursorPos; }\n  getTimestamp(): number { return this.timestamp; }\n}\n\n// 2. Originator (crea y restaura mementos)\nclass TextDocument {\n  private content = '';\n  private cursorPos = 0;\n\n  type(text: string) {\n    this.content += text;\n    this.cursorPos += text.length;\n  }\n\n  save(): TextDocumentMemento {\n    return new TextDocumentMemento(\n      this.content,\n      this.cursorPos,\n      Date.now()\n    );\n  }\n\n  restore(memento: TextDocumentMemento) {\n    this.content = memento.getContent();\n    this.cursorPos = memento.getCursorPos();\n  }\n}\n\n// 3. Caretaker (almacena mementos)\nclass History {\n  private mementos: TextDocumentMemento[] = [];\n\n  push(memento: TextDocumentMemento) {\n    this.mementos.push(memento);\n  }\n\n  pop(): TextDocumentMemento | undefined {\n    return this.mementos.pop();\n  }\n}\n\n// Uso:\nconst doc = new TextDocument();\nconst history = new History();\n\ndoc.type('Hola ');\nhistory.push(doc.save());\n\ndoc.type('Mundo!');\nconsole.log(doc); // → 'Hola Mundo!'\n\ndoc.restore(history.pop()!);\nconsole.log(doc); // → 'Hola '"
+    },
+    "prosCons": {
+      "pros": [
+        "Preserva el encapsulamiento: el memento es opaco para el caretaker.",
+        "Simplifica el originator: no necesita manejar la lógica de almacenamiento del historial.",
+        "Snapshots completos: cada memento contiene todo el estado necesario para restaurar.",
+        "Facilita deshacer/rehacer: el patrón es ideal para historiales de estados.",
+        "Separación de responsabilidades: el caretaker gestiona el historial, el originator gestiona el estado."
+      ],
+      "cons": [
+        "Consumo de memoria: cada memento almacena una copia completa del estado.",
+        "Costo de serialización: si los objetos son grandes, crear mementos puede ser costoso.",
+        "Mementos frágiles: si la estructura del originator cambia, los mementos antiguos pueden quedarse obsoletos.",
+        "Dificultad con objetos circulares: los mementos no manejan bien referencias circulares.",
+        "Límite de historial: el caretaker debe decidir cuántos mementos retener para no agotar memoria."
+      ]
+    },
+    "whenToUse": "Usá Memento cuando necesites guardar y restaurar el estado de un objeto sin exponer sus detalles internos. Es ideal para: editores con deshacer/rehacer, transacciones de base de datos con rollback, checkpoints en procesos largos, herramientas de diseño con historial de versiones, y cualquier caso donde necesites snapshots completos del estado sin romper el encapsulamiento.",
+    "whenNotToUse": "NO uses Memento si el estado del objeto es muy grande o complejo, ya que cada memento es una copia completa. Tampoco si no necesitas preservar el encapsulamiento — a veces un simple DTO o un getter/setter es suficiente. Si solo necesitas guardar un par de valores, un memento es overkill."
+    },
+  "codeBefore": "class Document {\n  constructor(\n    public content: string,\n    public cursorPos: number,\n    public fontSize: number\n  ) {}\n}\n\n// El estado está completamente expuesto\nconst doc = new Document('Hola', 4, 16);\n\n// Cualquier clase puede modificar el estado directamente\ndoc.content = 'Modificado';\ndoc.cursorPos = 10;\n\n// Guardar estado: copia manual de campos\ndoc.content = 'Copia del estado';",
+  "codeAfter": "// 1. Memento opaco\nclass DocumentMemento {\n  constructor(\n    private readonly content: string,\n    private readonly cursorPos: number,\n    private readonly timestamp: number\n  ) {}\n  getContent(): string { return this.content; }\n  getCursorPos(): number { return this.cursorPos; }\n}\n\n// 2. Originator crea y restaura mementos\nclass Document {\n  private content = '';\n  private cursorPos = 0;\n\n  save(): DocumentMemento {\n    return new DocumentMemento(this.content, this.cursorPos, Date.now());\n  }\n\n  restore(m: DocumentMemento) {\n    this.content = m.getContent();\n    this.cursorPos = m.getCursorPos();\n  }\n}\n\n// 3. Caretaker solo almacena\nclass History {\n  private stack: DocumentMemento[] = [];\n  push(m: DocumentMemento) { this.stack.push(m); }\n  pop(): DocumentMemento | undefined { return this.stack.pop(); }\n}",
+  "exercise": {
+    "title": "Reto de Implementación",
+    "fileName": "EditorDeDocumentos.ts",
+    "statement": "Implementa un editor de documentos con funcionalidad de snapshots usando el patrón Memento.",
+    "instructions": "Crea un editor de texto donde el usuario pueda escribir, guardar snapshots y restaurar estados anteriores. Cada snapshot debe contener el contenido del documento y la posición del cursor. El caretaker gestiona un historial de snapshots y permite navegar hacia atrás y adelante.",
+    "acceptanceCriteria": [
+      "El Originator (`Document`) crea mementos con su estado actual.",
+      "El Memento (`DocumentSnapshot`) no tiene setters — es inmutable.",
+      "El Caretaker (`Editor`) gestiona el historial de snapshots con push/pop.",
+      "Restaurar un snapshot devuelve el documento al estado exacto que tenía cuando se guardó."
+    ],
+    "starterCode": "// TODO: Define DocumentSnapshot (Memento) — immutable, no setters\n\n// TODO: Implement Document (Originator) — creates and restores snapshots\n\n// TODO: Implement Editor (Caretaker) — manages snapshot history\n\nconst editor = new Editor();\neditor.type('Hola ');\neditor.save();\neditor.type('Mundo!');\nconsole.log(editor.getContent()); // → 'Hola Mundo!'\n\neditor.undo();\nconsole.log(editor.getContent()); // → 'Hola '\n\neditor.redo();\nconsole.log(editor.getContent()); // → 'Hola Mundo!'"
+  }
+}

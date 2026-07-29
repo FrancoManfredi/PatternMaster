@@ -1,0 +1,76 @@
+{
+  "slug": "facade",
+  "title": "Facade",
+  "category": "ESTRUCTURAL",
+  "categoryLabel": "Patrón Estructural",
+  "difficulty": "Fácil",
+  "difficultyLevel": 1,
+  "description": "Proporciona una interfaz simplificada a un subsistema complejo. Facade define una interfaz de alto nivel que facilita el uso del subsistema entero.",
+  "codeTag": "STRUCTURAL_05",
+  "theory": {
+    "problem": "El Problema del Subsistema Complejo",
+    "problemDescription": "Imagina que tenés un sistema de cine en casa con amplificador, proyector, pantalla, sistema de sonido, luces, etc. Para ver una película, necesitás encender cada dispositivo en el orden correcto: encender el amplificador, bajar la pantalla, configurar el proyector, ajustar el sonido... Son 8 pasos que el cliente debe conocer y ejecutar en el orden preciso. El patrón Facade sugiere crear una clase de alto nivel que simplifique esa interacción compleja en un solo método.",
+    "beforeAfter": {
+      "before": "8 Dispositivos, 8 Llamadas, Orden Exacto",
+      "after": "Un Solo Método: watchMovie()"
+    }
+  },
+  "analogy": {
+    "title": "La Analogía del Recepcionista",
+    "description": "Cuando llegás a un hotel, no hablás directamente con el chef, el camarero, el conserje y el encargado del parking. Hablás con la recepcionista, que coordina todo por vos. La recepcionista es la Fachada: conoce todos los subsistemas internos pero te ofrece una interfaz simple.",
+    "quote": "No necesitás conocer todos los subsistemas — hablá con la Fachada."
+  },
+  "realCases": [
+    {
+      "title": "querySelector como fachada del DOM",
+      "description": "querySelector es una fachada sobre el motor de selección complejo del DOM: parsea CSS, traversa nodos, filtra por atributos. En lugar de hacer getElementsByTagName + filtrar + comprobar, usás una sola línea."
+    },
+    {
+      "title": "fetch() como fachada de XHR",
+      "description": "fetch() simplifica las peticiones HTTP: reemplaza XMLHttpRequest, maneja cookies, caching, CORS y streaming en una API promesa-based simple."
+    },
+    {
+      "title": "ORM como fachada de bases de datos",
+      "description": "Un ORM como Prisma o Sequelize es una fachada sobre SQL: en lugar de escribir queries, joins y transacciones manualmente, usás métodos de alto nivel como findMany(), create() y update()."
+    }
+  ],
+  "sections": {
+    "howItWorks": {
+      "title": "¿Cómo funciona Facade?",
+      "description": "El patrón Facade se compone de dos actores principales:\n\n1. **Fachada**: Es la clase que proporciona la interfaz simplificada. Conoce los subsistemas y coordina sus llamadas. No agrega nueva funcionalidad — solo simplifica la interacción.\n\n2. **Subsistema**: Son las clases existentes que realizan el trabajo real. Son complejas pero no se modifican. La Fachada las coordina sin cambiar su comportamiento.\n\nLa clave está en que la Fachada NO reemplaza al subsistema — el cliente puede seguir usándolo directamente si necesita control fino. La Fachada es una capa de conveniencia, no una restricción.",
+      "structureCode": "// === ESTRUCTURA DEL PATRÓN FACADE ===\n\n// 1. Subsistema — clases complejas\nclass Amplifier {\n  on() { console.log('Amplificador encendido'); }\n  off() { console.log('Amplificador apagado'); }\n  setVolume(level: number) { console.log('Volumen: ' + level); }\n}\n\nclass Projector {\n  on() { console.log('Proyector encendido'); }\n  off() { console.log('Proyector apagado'); }\n  setInput(input: string) { console.log('Input: ' + input); }\n  setWideScreen() { console.log('Modo panorámico'); }\n}\n\nclass Screen {\n  up() { console.log('Pantalla subiendo'); }\n  down() { console.log('Pantalla bajando'); }\n}\n\nclass SoundSystem {\n  on() { console.log('Sonido encendido'); }\n  off() { console.log('Sonido apagado'); }\n  setSurround() { console.log('Sonido surround activado'); }\n}\n\n// 2. Fachada — interfaz simplificada\nclass HomeTheaterFacade {\n  private amp = new Amplifier();\n  private projector = new Projector();\n  private screen = new Screen();\n  private sound = new SoundSystem();\n\n  watchMovie(movie: string) {\n    console.log('Preparando ' + movie + '...');\n    this.screen.down();\n    this.projector.on();\n    this.projector.setInput('DVD');\n    this.projector.setWideScreen();\n    this.sound.on();\n    this.sound.setSurround();\n    this.amp.on();\n    this.amp.setVolume(8);\n    console.log('Reproduciendo ' + movie);\n  }\n\n  endMovie() {\n    console.log('Apagando sistema...');\n    this.amp.off();\n    this.sound.off();\n    this.projector.off();\n    this.screen.up();\n    console.log('Sistema apagado');\n  }\n}\n\n// Uso:\nconst theater = new HomeTheaterFacade();\ntheater.watchMovie('Inception');\n// ... 2 horas después ...\ntheater.endMovie();"
+    },
+    "prosCons": {
+      "pros": [
+        "Simplifica el código cliente: una llamada en lugar de muchas.",
+        "Desacoplamiento: el cliente no depende de las implementaciones del subsistema.",
+        "Principio de Responsabilidad Única: la Fachada encapsula la coordinación.",
+        "Facilita el testing: podés mockear la Fachada en lugar de todo el subsistema.",
+        "No restringe el acceso: el cliente puede seguir usando el subsistema directamente si lo necesita."
+      ],
+      "cons": [
+        "Capa adicional: puede parecer over-engineering si el subsistema ya es simple.",
+        "Fachada上帝: si crece demasiado, se convierte en un God Object.",
+        "No reemplaza al subsistema: si el cliente necesita control fino, la Fachada no ayuda.",
+        "Puede ocultar funcionalidad útil: el cliente no sabe qué hay detrás de la Fachada."
+      ]
+    },
+    "whenToUse": "Usá Facade cuando tengas un subsistema complejo con muchas clases y querés simplificar la interacción para el cliente. Es ideal para: sistemas de cine en casa, configuración de servidores, APIs de bases de datos, bibliotecas externas complejas, o cuando querés desacoplar a tus clientes de los detalles de implementación.",
+    "whenNotToUse": "NO uses Facade si el subsistema ya es simple — sería una capa innecesaria. Tampoco si los clientes necesitan acceso de bajo nivel a todo el subsistema: la Fachada los restringiría. Si no hay subsistema complejo que simplificar, no hay nada que fachadar."
+  },
+  "codeBefore": "// El cliente debe conocer y coordinar 8 subsistemas\nclass Client {\n  watchMovie(movie: string) {\n    amplifier.on();\n    amplifier.setVolume(8);\n    screen.down();\n    projector.on();\n    projector.setInput('DVD');\n    projector.setWideScreen();\n    sound.on();\n    sound.setSurround();\n    console.log('Reproduciendo ' + movie);\n  }\n\n  endMovie() {\n    amplifier.off();\n    sound.off();\n    projector.off();\n    screen.up();\n  }\n}\n// El cliente debe saber el orden exacto de cada llamada",
+  "codeAfter": "// Un solo método hace todo el trabajo\nconst theater = new HomeTheaterFacade();\ntheater.watchMovie('Inception');\n// ... 2 horas después ...\ntheater.endMovie();\n// El cliente no sabe ni le importa cuántos subsistemas hay por detrás",
+  "exercise": {
+    "title": "Reto de Implementación",
+    "fileName": "CentroMultimedia.ts",
+    "statement": "Implementa una fachada para un sistema de centro multimedia que coordine múltiples subsistemas.",
+    "instructions": "Tenés subsistemas: Amplifier, Projector, Screen y SoundSystem. Creá una fachada HomeTheaterFacade que coordine todos los subsistemas con métodos simples watchMovie() y endMovie(). Cada método debe encender, configurar y sincronizar todos los subsistemas en el orden correcto.",
+    "acceptanceCriteria": [
+      "Define clases de subsistema: Amplifier, Projector, Screen, SoundSystem.",
+      "Cada subsistema tiene métodos on(), off() y configuración específica.",
+      "Implementa HomeTheaterFacade con watchMovie() que coordine todos los subsistemas.",
+      "Implementa endMovie() que apague todo en el orden correcto."
+    ],
+    "starterCode": "// TODO: Create Amplifier class with on/off/setVolume\n\n// TODO: Create Projector class with on/off/setInput/setWideScreen\n\n// TODO: Create Screen class with up/down\n\n// TODO: Create SoundSystem class with on/off/setSurround\n\n// TODO: Create HomeTheaterFacade class\n\nclass HomeTheaterFacade {\n  // TODO: Add subsystem references\n\n  watchMovie(movie: string) {\n    // TODO: Coordinate all subsystems\n  }\n\n  endMovie() {\n    // TODO: Shutdown all subsystems in order\n  }\n}\n\n// Demo:\nconst theater = new HomeTheaterFacade();\ntheater.watchMovie('Inception');\ntheater.endMovie();\n"
+  }
+}

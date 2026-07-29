@@ -1,0 +1,77 @@
+{
+  "slug": "chain-of-responsibility",
+  "title": "Chain of Responsibility",
+  "category": "COMPORTAMIENTO",
+  "categoryLabel": "Patrón de Comportamiento",
+  "difficulty": "Fácil",
+  "difficultyLevel": 1,
+  "description": "Permite pasar una petición a lo largo de una cadena de manejadores hasta que uno de ellos la procesa. Cada manejador decide si procesa la petición o la delega al siguiente de la cadena.",
+  "codeTag": "BEHAVIORAL_04",
+  "theory": {
+    "problem": "El Problema del Acoplamiento Rígido entre Handlers",
+    "problemDescription": "Imagina que estás construyendo un sistema de soporte técnico. Las peticiones llegan con distintos niveles de complejidad: problemas de contraseña, facturación, bugs técnicos, etc. Tradicionalmente, crearías una función gigante con un `if/else` que verifica el tipo de petición y decide quién la atiende. Esto genera un acoplamiento rígido: agregar un nuevo tipo de petición significa modificar el código existente, y reordenar la prioridad de los manejadores requiere reescribir lógica. El patrón Chain of Responsibility sugiere desacoplar el remitente de los receptores al enviar la petición a lo largo de una cadena de manejadores, donde cada uno tiene la oportunidad de procesarla o pasarla al siguiente.",
+    "beforeAfter": {
+      "before": "Acoplamiento Rígido",
+      "after": "Cadena Desacoplada"
+    }
+  },
+  "analogy": {
+    "title": "La Analogía de la Atención al Cliente",
+    "description": "Llamás a soporte de una empresa y primero hablás con un asistente nivel 1. Si no puede resolver tu problema, te transfiere al nivel 2. Si tampoco puede, te transfiere al gerente. Cada nivel tiene la autoridad para resolver ciertos tipos de problemas. Si el asistente puede resolverlo, no necesitás escalar. Si no puede, pasás al siguiente. Ningún nivel necesita conocer todos los problemas posibles.",
+    "quote": "Cada nivel tiene la autoridad para resolver ciertos tipos de problemas, y si no puede, escala al siguiente."
+  },
+  "realCases": [
+    {
+      "title": "Middleware en Express.js / Koa",
+      "description": "Los frameworks web como Express y Koa usan cadenas de middleware. Cada middleware intercepta la petición HTTP, realiza su trabajo (logging, autenticación, parseo de body) y decide si pasa al siguiente middleware o responde directamente. La cadena se compone dinámicamente al registrar los middlewares en orden."
+    },
+    {
+      "title": "Event Bubbling en el DOM",
+      "description": "Cuando hacés click en un elemento del DOM, el evento sube (bubbling) desde el elemento objetivo hasta la raíz. Cada elemento en la jerarquía puede tener un listener que maneje el evento o lo ignore, dejando que suba al siguiente. Es exactamente una cadena de responsabilidad implementada por el navegador."
+    },
+    {
+      "title": "Frameworks de Logging",
+      "description": "Librerías como Winston o Pino usan cadenas de handlers de logging. Cada handler verifica el nivel del mensaje (debug, info, warn, error) y decide si lo procesa (escribir a archivo, enviar a un servicio externo) o lo delega al siguiente handler en la cadena."
+    }
+  ],
+  "sections": {
+    "howItWorks": {
+      "title": "¿Cómo funciona Chain of Responsibility?",
+      "description": "El patrón Chain of Responsibility se compone de cuatro actores principales:\n\n1. **Interfaz Handler**: Define el contrato que todos los manejadores deben cumplir. Generalmente incluye un método para procesar la petición y una referencia al siguiente manejador.\n\n2. **Manejadores Concretas**: Son las implementaciones individuales que procesan un tipo específico de petición. Cada una verifica si puede manejar la petición; si no puede, la delega al siguiente.\n\n3. **Cadena**: La secuencia de manejadores enlazados. Puede ser configurada dinámicamente, permitiendo reordenar, agregar o eliminar manejadores en tiempo de ejecución.\n\n4. **Cliente**: El que inicia la petición. No necesita saber quién la procesará, solo envía la petición al primer manejador de la cadena.\n\nLa clave está en que ningún manejador conoce al siguiente directamente. Cada uno solo sabe que si no puede procesar, delega. Esto permite modificar la cadena sin tocar el código cliente.",
+      "structureCode": "// === ESTRUCTURA DEL PATRÓN CHAIN OF RESPONSIBILITY ===\n\n// 1. Interfaz Handler (el contrato)\ninterface Handler {\n  setNext(handler: Handler): Handler;\n  handle(request: string): string | null;\n}\n\n// 2. Manejador Abstracto (implementación base)\nabstract class AbstractHandler implements Handler {\n  private nextHandler: Handler | null = null;\n\n  setNext(handler: Handler): Handler {\n    this.nextHandler = handler;\n    return handler;\n  }\n\n  handle(request: string): string | null {\n    if (this.nextHandler) {\n      return this.nextHandler.handle(request);\n    }\n    return null;\n  }\n}\n\n// 3. Manejadores Concretas\nclass AuthHandler extends AbstractHandler {\n  handle(request: string): string | null {\n    if (request === 'auth') {\n      return 'Autenticación verificada';\n    }\n    return super.handle(request);\n  }\n}\n\nclass ValidationHandler extends AbstractHandler {\n  handle(request: string): string | null {\n    if (request === 'validate') {\n      return 'Datos validados';\n    }\n    return super.handle(request);\n  }\n}\n\n// 4. Cliente compone la cadena\nconst auth = new AuthHandler();\nconst validation = new ValidationHandler();\nauth.setNext(validation);\n\nauth.handle('validate'); // → 'Datos validados'\nauth.handle('unknown');  // → null"
+    },
+    "prosCons": {
+      "pros": [
+        "Desacopla el emisor del receptor: el cliente no necesita saber quién procesa la petición.",
+        "Responsabilidad única: cada manejador se ocupa de UN solo tipo de petición.",
+        "Flexibilidad en la cadena: podés reordenar, agregar o eliminar manejadores sin tocar el código cliente.",
+        "Principio Abierto/Cerrado (OCP): podés agregar nuevos manejadores sin modificar los existentes.",
+        "Flujo de control dinámico: la cadena puede configurarse en tiempo de ejecución según las necesidades."
+      ],
+      "cons": [
+        "La petición puede no ser procesada: si ningún manejador la maneja, se pierde silenciosamente.",
+        "Rendimiento en cadenas largas: la petición recorre toda la cadena antes de llegar al manejador correcto.",
+        "Dificultad de depuración: el flujo de control no es evidente, lo que dificulta rastrear errores.",
+        "Puede crear cadenas circulares: si se configuran mal los manejadores, la petición entra en un bucle infinito.",
+        "Acoplamiento implícito: aunque el cliente no conoce al manejador, la cadena debe configurarse correctamente."
+      ]
+    },
+    "whenToUse": "Usá Chain of Responsibility cuando tengas múltiples manejadores posibles para una petición y no quieras acoplar al emisor con el receptor. Es ideal para: pipelines de middleware, sistemas de aprobación con múltiples niveles, manejo de eventos con propagation, validaciones encadenadas, y cualquier caso donde la petición pueda ser procesada por más de un objeto pero no sabés cuál de antemano.",
+    "whenNotToUse": "NO uses Chain of Responsibility si siempre sabés de antemano quién debe procesar la petición. Tampoco si la cadena puede crecer demasiado y necesitás performance, ya que cada petición recorre la cadena hasta encontrar un manejador. Si la petición siempre debe ser procesada por exactamente un manejador, considerá un patrón Strategy en su lugar."
+  },
+  "codeBefore": "class SupportTicketHandler {\n  handleTicket(ticket: SupportTicket) {\n    if (ticket.type === 'password') {\n      // resolver problema de contraseña\n    } else if (ticket.type === 'billing') {\n      // resolver problema de facturación\n    } else if (ticket.type === 'bug') {\n      // resolver bug técnico\n    } else {\n      // petición no reconocida\n    }\n  }\n}",
+  "codeAfter": "// 1. Interfaz común\ninterface TicketHandler {\n  setNext(handler: TicketHandler): TicketHandler;\n  handle(ticket: SupportTicket): string | null;\n}\n\n// 2. Manejadores concretos aislados\nclass PasswordHandler extends AbstractHandler {\n  handle(ticket: SupportTicket): string | null {\n    if (ticket.type === 'password') return 'Contraseña reseteada';\n    return super.handle(ticket);\n  }\n}\n\nclass BillingHandler extends AbstractHandler {\n  handle(ticket: SupportTicket): string | null {\n    if (ticket.type === 'billing') return 'Factura corregida';\n    return super.handle(ticket);\n  }\n}\n\n// 3. Cliente compone la cadena\nconst password = new PasswordHandler();\nconst billing = new BillingHandler();\npassword.setNext(billing);\n\npassword.handle({ type: 'billing', message: '...' }); // → 'Factura corregida'",
+  "exercise": {
+    "title": "Reto de Implementación",
+    "fileName": "SistemaDeAprobacion.ts",
+    "statement": "Implementa un sistema de aprobación de gastos usando el patrón Chain of Responsibility.",
+    "instructions": "Un empleado solicita un gasto. Si el monto es menor a $100, el Employee lo aprueba directamente. Si es menor a $1000, lo aprueba el Manager. Si es mayor, lo aprueba el Director. Implementa la cadena de aprobación donde cada nivel decide si aprueba o delega al siguiente.",
+    "acceptanceCriteria": [
+      "Crea una interfaz `ApprovalHandler` con `setNext()` y `approve()`.",
+      "Implementa `EmployeeHandler`, `ManagerHandler` y `DirectorHandler` con sus respectivos límites.",
+      "Compone la cadena en el cliente: employee → manager → director.",
+      "La lógica de aprobación evalúa el monto y delega al siguiente si no puede aprobar."
+    ],
+    "starterCode": "// TODO: Define ApprovalHandler interface here\n\n// TODO: Implement concrete handlers with approval limits\n\n// TODO: Build the chain: Employee → Manager → Director\n\nconst employee = new EmployeeHandler();\nconst manager = new ManagerHandler();\nconst director = new DirectorHandler();\nemployee.setNext(manager).setNext(director);\n\nconsole.log(employee.approve(50));   // → 'Employee aprobó'\nconsole.log(employee.approve(500));  // → 'Manager aprobó'\nconsole.log(employee.approve(5000)); // → 'Director aprobó'"
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "slug": "visitor",
+  "title": "Visitor",
+  "category": "COMPORTAMIENTO",
+  "categoryLabel": "Patrón de Comportamiento",
+  "difficulty": "Difícil",
+  "difficultyLevel": 3,
+  "description": "Representa una operación a realizar sobre los elementos de una estructura de objetos, permitiendo definir nuevas operaciones sin cambiar las clases de los elementos. Separa el algoritmo de la estructura de objetos.",
+  "codeTag": "BEHAVIORAL_12",
+  "theory": {
+    "problem": "El Problema de las Operaciones que Cruzan la Estructura",
+    "problemDescription": "Imagina que tenés una estructura de objetos compuesta (como un AST de un lenguaje de programación, un documento con elementos anidados, o una estructura geométrica con formas). Necesitás realizar múltiples operaciones sobre esta estructura: serializar, validar, generar código, calcular métricas. Sin el patrón Visitor, cada operación se distribuye entre todas las clases de elementos, violando SRP. Agregar una nueva operación significa modificar TODAS las clases de elementos. El patrón Visitor sugiere extraer cada operación en una clase visitor separada, y que los elementos implementen un método `accept()` que acepta al visitante.",
+    "beforeAfter": {
+      "before": "Operaciones Dispersas",
+      "after": "Operaciones Centradas"
+    }
+  },
+  "analogy": {
+    "title": "La Analogía del Auditor Fiscal",
+    "description": "Un auditor fiscal visita cada departamento de una empresa: finanzas, recursos humanos, ingeniería. En cada departamento, realiza el mismo proceso de auditoría pero con enfoques distintos. Los departamentos no cambian cómo operan; simplemente abren sus puertas al auditor. Cuando cambian las leyes fiscales, se crea un nuevo auditor (visitor) sin modificar ningún departamento.",
+    "quote": "Los departamentos no cambian cómo operan; simplemente abren sus puertas al auditor."
+  },
+  "realCases": [
+    {
+      "title": "Recorrido de AST (Árbol de Sintaxis Abstracta)",
+      "description": "Los compiladores usan Visitor para recorrer árboles de sintaxis. Cada nodo del árbol (expresión, statement, función) implementa `accept()`. Los visitors realizan operaciones como: verificación de tipos, generación de código, optimización, y linting. Agregar un nuevo análisis es crear un nuevo visitor sin tocar los nodos del AST."
+    },
+    {
+      "title": "Exportación de Documentos",
+      "description": "Un documento con estructura jerárquica (títulos, párrafos, listas, imágenes) puede exportarse como PDF, HTML, o Markdown. Cada elemento del documento implementa `accept()`. Los visitors de exportación recorren la estructura y generan el formato específico. Agregar soporte para un nuevo formato es crear un nuevo visitor."
+    },
+    {
+      "title": "Compiladores y Traductores",
+      "description": "Los traductores de lenguajes (Babel, TypeScript compiler) usan Visitor extensivamente. Cada nodo del AST acepta visitors que realizan transformaciones: desazucarado, tipado, generación de código. Los visitors se componen y encadenan para crear pipelines de transformación."
+    }
+  ],
+  "sections": {
+    "howItWorks": {
+      "title": "¿Cómo funciona Visitor?",
+      "description": "El patrón Visitor se compone de tres actores principales:\n\n1. **Interfaz Visitor**: Define un método `visit` por cada tipo de elemento concreto en la estructura. Por ejemplo, `visitCircle(circle)`, `visitRectangle(rectangle)`, `visitTriangle(triangle)`.\n\n2. **Visitors Concretos**: Implementan la interfaz Visitor. Cada visitor encapsula una operación completa sobre la estructura. Un visitor de exportación genera PDF, otro genera HTML, otro genera texto plano.\n\n3. **Elementos con accept()**: Cada clase de elemento implementa un método `accept(visitor)` que llama al método `visit` correspondiente del visitor. Esto permite que el visitor \"conozca\" el tipo exacto del elemento sin casts.\n\nLa clave está en la doble despachación: el elemento acepta al visitor (despachación 1) y el visitor ejecuta la operación correcta según el tipo (despachación 2). Esto permite agregar nuevas operaciones sin modificar las clases de elementos.",
+      "structureCode": "// === ESTRUCTURA DEL PATRÓN VISITOR ===\n\n// 1. Interfaz Visitor (método por cada tipo de elemento)\ninterface ShapeVisitor {\n  visitCircle(circle: Circle): string;\n  visitRectangle(rectangle: Rectangle): string;\n  visitTriangle(triangle: Triangle): string;\n}\n\n// 2. Elementos con accept()\ninterface Shape {\n  accept(visitor: ShapeVisitor): string;\n  area(): number;\n}\n\nclass Circle implements Shape {\n  constructor(public radius: number) {}\n\n  accept(visitor: ShapeVisitor): string {\n    return visitor.visitCircle(this); // Despachación 1\n  }\n\n  area(): number {\n    return Math.PI * this.radius ** 2;\n  }\n}\n\nclass Rectangle implements Shape {\n  constructor(public width: number, public height: number) {}\n\n  accept(visitor: ShapeVisitor): string {\n    return visitor.visitRectangle(this);\n  }\n\n  area(): number {\n    return this.width * this.height;\n  }\n}\n\n// 3. Visitors Concretos\nclass SVGExporter implements ShapeVisitor {\n  visitCircle(circle: Circle): string {\n    return `<circle r=\"${circle.radius}\" />`;\n  }\n\n  visitRectangle(rect: Rectangle): string {\n    return `<rect width=\"${rect.width}\" height=\"${rect.height}\" />`;\n  }\n\n  visitTriangle(tri: Triangle): string {\n    return `<polygon points=\"${tri.points}\" />`;\n  }\n}\n\nclass JSONExporter implements ShapeVisitor {\n  visitCircle(circle: Circle): string {\n    return JSON.stringify({ type: 'circle', radius: circle.radius });\n  }\n\n  visitRectangle(rect: Rectangle): string {\n    return JSON.stringify({ type: 'rectangle', width: rect.width, height: rect.height });\n  }\n\n  visitTriangle(tri: Triangle): string {\n    return JSON.stringify({ type: 'triangle', points: tri.points });\n  }\n}\n\n// Uso:\nconst shapes: Shape[] = [new Circle(5), new Rectangle(4, 6)];\nconst svgVisitor = new SVGExporter();\nshapes.forEach(s => console.log(s.accept(svgVisitor)));\n// <circle r=\"5\" />\n// <rect width=\"4\" height=\"6\" />"
+    },
+    "prosCons": {
+      "pros": [
+        "Principio Abierto/Cerrado (OCP): agregar nuevas operaciones NO modifica las clases de elementos.",
+        "Responsabilidad única: cada visitor encapsula UNA operación completa.",
+        "Operaciones relacionadas centralizadas: toda la lógica de una operación está en UN visitor.",
+        "Se pueden combinar visitors: encadenar múltiples operaciones sobre la misma estructura.",
+        "Fácil de agregar nuevos formatos/operaciones: crear un nuevo visitor sin tocar elementos existentes."
+      ],
+      "cons": [
+        "Acoplamiento bidireccional: el visitor conoce todos los tipos de elementos y viceversa.",
+        "Agregar nuevos elementos rompe la interfaz: un nuevo tipo de elemento requiere agregar un nuevo `visit` a TODOS los visitors.",
+        "Doble despachación compleja: el mecanismo de accept/visit puede ser difícil de entender.",
+        "Violación de encapsulación: los visitors pueden necesitar acceder a estado interno de los elementos."
+      ]
+    },
+    "whenToUse": "Usá Visitor cuando tengas una estructura de objetos compuesta y necesites realizar múltiples operaciones independientes sobre ella. Es ideal para: compiladores y ASTs, exportación de documentos a múltiples formatos, recorrido de estructuras jerárquicas con diferentes análisis, serialización/deserialización de objetos complejos, y cualquier caso donde agregar nuevas operaciones no debería modificar las clases de elementos.",
+    "whenNotToUse": "NO uses Visitor si la estructura de objetos cambia frecuentemente, ya que agregar un nuevo tipo de elemento requiere modificar TODOS los visitors. Tampoco si solo necesitas una o dos operaciones sobre la estructura. Si los elementos son simples y no forman una jerarquía compleja, un visitor es overkill. Para operaciones simples sobre una jerarquía, considerá un recorrido directo o Composite."
+  },
+  "codeBefore": "class Circle {\n  constructor(public radius: number) {}\n\n  area() { return Math.PI * this.radius ** 2; }\n  perimeter() { return 2 * Math.PI * this.radius; }\n  toSVG() { return `<circle r=\"${this.radius}\" />`; }\n  toJSON() { return `{\"type\": \"circle\", \"radius\": ${this.radius}}`; }\n}\n\nclass Rectangle {\n  constructor(public width: number, public height: number) {}\n\n  area() { return this.width * this.height; }\n  perimeter() { return 2 * (this.width + this.height); }\n  toSVG() { return `<rect width=\"${this.width}\" height=\"${this.height}\" />`; }\n  toJSON() { return `{\"type\": \"rectangle\", \"width\": ${this.width}, \"height\": ${this.height}}`; }\n}\n\n// Agregar una operación (toMarkdown) requiere modificar AMBAS clases",
+  "codeAfter": "// 1. Interfaz Visitor\ninterface ShapeVisitor {\n  visitCircle(circle: Circle): string;\n  visitRectangle(rectangle: Rectangle): string;\n}\n\n// 2. Elementos con accept()\ninterface Shape {\n  accept(visitor: ShapeVisitor): string;\n  area(): number;\n}\n\nclass Circle implements Shape {\n  constructor(public radius: number) {}\n  accept(visitor: ShapeVisitor) { return visitor.visitCircle(this); }\n  area() { return Math.PI * this.radius ** 2; }\n}\n\nclass Rectangle implements Shape {\n  constructor(public width: number, public height: number) {}\n  accept(visitor: ShapeVisitor) { return visitor.visitRectangle(this); }\n  area() { return this.width * this.height; }\n}\n\n// 3. Visitors para cada operación\nclass SVGExporter implements ShapeVisitor {\n  visitCircle(c: Circle) { return `<circle r=\"${c.radius}\" />`; }\n  visitRectangle(r: Rectangle) { return `<rect width=\"${r.width}\" height=\"${r.height}\" />`; }\n}\n\n// Agregar nueva operación = nuevo visitor, sin tocar elementos\nclass MarkdownExporter implements ShapeVisitor {\n  visitCircle(c: Circle) { return `Circle (r=${c.radius})`; }\n  visitRectangle(r: Rectangle) { return `Rectangle (${r.width}x${r.height})`; }\n}",
+  "exercise": {
+    "title": "Reto de Implementación",
+    "fileName": "ExportadorDeFormas.ts",
+    "statement": "Implementa un exportador de formas geométricas que pueda exportar círculos, rectángulos y triángulos como SVG, JSON y texto plano usando el patrón Visitor.",
+    "instructions": "Crea una interfaz `ShapeVisitor` con un método visit por cada tipo de forma. Las formas (Circle, Rectangle, Triangle) implementan `accept()` que despacha al visitor. Los visitors concretos (SVGExporter, JSONExporter, TextExporter) implementan la exportación específica. Agregar un nuevo formato de exportación NO debe modificar las clases de formas.",
+    "acceptanceCriteria": [
+      "Crea una interfaz `ShapeVisitor` con métodos `visitCircle`, `visitRectangle` y `visitTriangle`.",
+      "Las formas implementan `accept(visitor: ShapeVisitor)` que despacha al método visit correspondiente.",
+      "Implementa los visitors concretos `SVGExporter`, `JSONExporter` y `TextExporter`.",
+      "Agregar un nuevo formato de exportación solo requiere crear un nuevo visitor sin modificar las formas."
+    ],
+    "starterCode": "// TODO: Define ShapeVisitor interface with visit methods per shape type\n\n// TODO: Define Shape interface with accept() method\n\n// TODO: Implement Circle, Rectangle, Triangle with accept()\n\n// TODO: Implement SVGExporter, JSONExporter, TextExporter visitors\n\nconst shapes: Shape[] = [new Circle(5), new Rectangle(4, 6), new Triangle(3, 4, 5)];\n\nconst svgVisitor = new SVGExporter();\nshapes.forEach(s => console.log(s.accept(svgVisitor)));\n\nconst jsonVisitor = new JSONExporter();\nshapes.forEach(s => console.log(s.accept(jsonVisitor)));"
+  }
+}

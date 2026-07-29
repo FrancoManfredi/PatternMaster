@@ -1,0 +1,38 @@
+import { buildGuidedExercise } from "@/lib/guided-mode/build";
+import type { GuidedStepInput } from "@/lib/guided-mode/build";
+
+const steps: GuidedStepInput[] = [
+  {
+    index: 0,
+    title: "Entendé el problema de las instancias múltiples",
+    explanation: `El patrón **Singleton** resuelve un problema específico: necesitás que una clase tenga **una sola instancia** compartida por toda la aplicación. Actualmente, \`ConfigManager\` tiene constructor público — cualquier módulo puede crear su propia instancia con \`new ConfigManager()\`. Esto genera configuraciones duplicadas e inconsistencias.\n\n**El ejercicio de este patrón**: refactorizá \`ConfigManager\` a Singleton para que cargue configuración una vez y la provea globalmente. El problema es claro: si cada parte de la app hace \`new ConfigManager()\`, cada instancia carga la config de nuevo — una pérdida de recursos y una fuente de bugs cuando cada módulo cree tener la "config oficial". \`configA\` y \`configB\` son objetos distintos con el mismo contenido, cuando en realidad debería existir una sola \`ConfigManager\` compartida.\n\n**Conceptos clave**: Singleton garantiza una sola instancia usando un **constructor privado** (que nadie pueda hacer \`new\` desde afuera) y un **método estático** \`getInstance()\` que es el único punto de acceso. La instancia se crea una vez y se reutiliza en todas las llamadas.`,
+    code: {
+      typescript: `class ConfigManager {\n  private config: Record<string, string>;\n\n  constructor() {\n    // Simula carga de config (podría ser de .env o archivo)\n    this.config = {\n      DB_HOST: 'localhost',\n      DB_PORT: '5432',\n      API_KEY: 'secret-123',\n    };\n  }\n\n  get(key: string): string | undefined {\n    return this.config[key];\n  }\n\n  getAll(): Record<string, string> {\n    return { ...this.config };\n  }\n}\n\n// BUG: cada módulo crea su propia instancia\nconst configA = new ConfigManager();\nconst configB = new ConfigManager();\nconsole.log(configA === configB); // false — deberían ser la misma`,
+      javascript: `class ConfigManager {\n  constructor() {\n    // Simula carga de config (podría ser de .env o archivo)\n    this.config = {\n      DB_HOST: 'localhost',\n      DB_PORT: '5432',\n      API_KEY: 'secret-123',\n    };\n  }\n\n  get(key) {\n    return this.config[key];\n  }\n\n  getAll() {\n    return { ...this.config };\n  }\n}\n\n// BUG: cada módulo crea su propia instancia\nconst configA = new ConfigManager();\nconst configB = new ConfigManager();\nconsole.log(configA === configB); // false — deberían ser la misma`,
+    },
+  },
+  {
+    index: 1,
+    title: "Hacé privado el constructor y agregá el campo estático",
+    explanation: `El primer paso para convertir \`ConfigManager\` en Singleton es **privar el constructor**. En TypeScript, agregás \`private\` al constructor para que nadie pueda hacer \`new ConfigManager()\` desde afuera de la clase. Si alguien lo intenta, el compilador lo bloquea (en runtime con Sucrase, el \`private\` se elimina, pero el contrato sigue siendo "esta clase no se instancia directamente").\n\nTambién agregás un **campo estático \`instance\`** que va a almacenar la única instancia de la clase. Es \`undefined\` inicialmente — se va a crear la primera vez que se necesite. El campo es estático porque pertenece a la **clase**, no a cada instancia.\n\nAhora la clase está preparada para Singleton, pero falta algo esencial: \`getInstance()\`. Sin ese método no hay forma de obtener la instancia desde afuera, porque el constructor privado bloquea el \`new\`. En el próximo paso lo implementamos.\n\n**Por qué esto importa**: el constructor privado es la barrera que impide instancias múltiples. Sin él, cualquier código podría hacer \`new ConfigManager()\` y romper la garantía de una sola instancia. La combinación "constructor privado + campo estático \`instance\`" es la base sobre la que se construye el resto del patrón.`,
+    code: {
+      typescript: `class ConfigManager {\n  private static instance: ConfigManager;\n  private config: Record<string, string>;\n\n  private constructor() {\n    this.config = {\n      DB_HOST: 'localhost',\n      DB_PORT: '5432',\n      API_KEY: 'secret-123',\n    };\n  }\n\n  get(key: string): string | undefined {\n    return this.config[key];\n  }\n\n  getAll(): Record<string, string> {\n    return { ...this.config };\n  }\n}`,
+      javascript: `class ConfigManager {\n  static instance;\n  config;\n\n  constructor() {\n    this.config = {\n      DB_HOST: 'localhost',\n      DB_PORT: '5432',\n      API_KEY: 'secret-123',\n    };\n  }\n\n  get(key) {\n    return this.config[key];\n  }\n\n  getAll() {\n    return { ...this.config };\n  }\n}`,
+    },
+  },
+  {
+    index: 2,
+    title: "Implementá getInstance() para completar el Singleton",
+    explanation: `Este es el paso que completa el patrón. \`getInstance()\` es un **método estático** que es el único punto de acceso a la instancia de \`ConfigManager\`.\n\nLa lógica es simple: si \`ConfigManager.instance\` no existe todavía, la crea con \`new ConfigManager()\` (que SÍ puede llamarse desde adentro de la propia clase, aunque el constructor sea privado). Si ya existe, la retorna directamente. Esto se llama **lazy initialization** — la instancia se crea solo cuando se necesita por primera vez, no al cargar la clase. La configuración se carga una sola vez, dentro del constructor privado, y nunca se recarga.\n\nAhora \`ConfigManager\` es un Singleton completo:\n- Constructor privado que impide \`new\` desde afuera.\n- Campo estático \`instance\` que almacena la única instancia.\n- \`getInstance()\` que es el único punto de acceso global.\n- \`get(key)\` para acceder a valores individuales y \`getAll()\` para obtener toda la config.\n\nCualquier módulo que necesite la configuración llama a \`ConfigManager.getInstance().get('DB_HOST')\` y siempre recibe la misma instancia, con los mismos valores, cargados una sola vez.\n\n**El resultado**: una fuente única de verdad para la configuración. No importa cuántos módulos la usen — todos comparten la misma instancia, con los mismos valores, cargados una sola vez. Eso es Singleton aplicado a \`ConfigManager\`.`,
+    code: {
+      typescript: `class ConfigManager {\n  private static instance: ConfigManager;\n  private config: Record<string, string>;\n\n  // Constructor privado — solo la clase puede instanciarse\n  private constructor() {\n    this.config = {\n      DB_HOST: 'localhost',\n      DB_PORT: '5432',\n      API_KEY: 'secret-123',\n    };\n  }\n\n  // getInstance() — El punto de acceso global\n  static getInstance(): ConfigManager {\n    if (!ConfigManager.instance) {\n      ConfigManager.instance = new ConfigManager();\n    }\n    return ConfigManager.instance;\n  }\n\n  // get(key) — La forma de acceder a los valores\n  get(key: string): string | undefined {\n    return this.config[key];\n  }\n\n  getAll(): Record<string, string> {\n    return { ...this.config };\n  }\n}`,
+      javascript: `class ConfigManager {\n  static instance;\n  config;\n\n  // Constructor privado — solo la clase puede instanciarse\n  constructor() {\n    this.config = {\n      DB_HOST: 'localhost',\n      DB_PORT: '5432',\n      API_KEY: 'secret-123',\n    };\n  }\n\n  // getInstance() — El punto de acceso global\n  static getInstance() {\n    if (!ConfigManager.instance) {\n      ConfigManager.instance = new ConfigManager();\n    }\n    return ConfigManager.instance;\n  }\n\n  // get(key) — La forma de acceder a los valores\n  get(key) {\n    return this.config[key];\n  }\n\n  getAll() {\n    return { ...this.config };\n  }\n}`,
+    },
+  },
+];
+
+export const singletonGuided = buildGuidedExercise(
+  "singleton",
+  "Singleton — Modo Guiado",
+  steps
+);

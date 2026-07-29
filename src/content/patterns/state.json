@@ -1,0 +1,76 @@
+{
+  "slug": "state",
+  "title": "State",
+  "category": "COMPORTAMIENTO",
+  "categoryLabel": "Patrón de Comportamiento",
+  "difficulty": "Intermedio",
+  "difficultyLevel": 2,
+  "description": "Permite a un objeto alterar su comportamiento cuando cambia su estado interno, pareciendo como si hubiera cambiado su clase. El objeto delega el comportamiento actual a un objeto de estado que representa el estado actual.",
+  "codeTag": "BEHAVIORAL_10",
+  "theory": {
+    "problem": "El Problema de las Múltiples Condiciones de Estado",
+    "problemDescription": "Imagina que estás construyendo una máquina expendedora. Tiene estados como \"esperando dinero\", \"dinero insertado\", \"dispensando\" y \"agotado\". Cada método de la máquina (insertar dinero, seleccionar producto, dispensar) se convierte en un gigante `if/else` o `switch` que verifica el estado actual en cada paso. Agregar un nuevo estado significa modificar TODOS los métodos de la máquina. El patrón State sugiere extraer cada comportamiento dependiente del estado en clases separadas, donde el objeto contexto delega el comportamiento actual a su estado interno.",
+    "beforeAfter": {
+      "before": "Condiciones Enredadas",
+      "after": "Estados Desacoplados"
+    }
+  },
+  "analogy": {
+    "title": "La Analogía de la Máquina Expendedora",
+    "description": "Una máquina expendedora tiene un ciclo de vida: espera dinero, recibe dinero, dispensa producto, o está agotada. En cada estado, la máquina se comporta diferente: si estás en \"esperando dinero\" y presionas dispensar, nada pasa; si estás en \"dinero insertado\" y seleccionás un producto, dispensa. Cada estado encapsula un comportamiento distinto, y la máquina solo delega a su estado actual.",
+    "quote": "La máquina no cambia de clase, simplemente cambia quién decide su comportamiento: su estado interno."
+  },
+  "realCases": [
+    {
+      "title": "Ciclo de Vida de un Pedido",
+      "description": "Un pedido en e-commerce pasa por estados: pendiente → pagado → enviado → entregado. En cada estado, las acciones disponibles cambian: un pedido pendiente puede cancelarse, pero uno enviado no. El patrón State encapsula las transiciones y comportamientos de cada etapa."
+    },
+    {
+      "title": "Estados de un Personaje de Juego",
+      "description": "Un personaje de videojuego puede estar en estados como idle, corriendo, saltando, o herido. En cada estado, el personaje responde diferente a las entradas: si está herido, no puede saltar. La transición entre estados se gestiona con el patrón State."
+    },
+    {
+      "title": "Conexiones TCP",
+      "description": "El protocolo TCP maneja estados como LISTEN, SYN_SENT, ESTABLISHED, FIN_WAIT. Cada estado define qué mensajes acepta y cómo responde. Implementar el patrón State hace que el manejo de conexiones sea limpio y extensible."
+    }
+  ],
+  "sections": {
+    "howItWorks": {
+      "title": "¿Cómo funciona State?",
+      "description": "El patrón State se compone de tres actores principales:\n\n1. **Interfaz State**: Define el contrato que todos los estados concretos deben cumplir. Cada método de la interfaz corresponde a una acción que puede ejecutarse desde cualquier estado.\n\n2. **Estados Concretos**: Son las implementaciones individuales del comportamiento. Cada clase encapsula el comportamiento específico de un estado, y las transiciones a otros estados se realizan cambiando el estado actual del contexto.\n\n3. **Contexto**: La clase principal que mantiene una referencia al estado actual. Delega todas las peticiones al objeto estado, y cambia de estado cuando es necesario.\n\nLa clave está en que el contexto no contiene lógica condicional sobre su estado. En su lugar, cada estado decide qué hacer y cuándo transicionar al siguiente.",
+      "structureCode": "// === ESTRUCTURA DEL PATRÓN STATE ===\n\n// 1. Interfaz State (el contrato)\ninterface VendingState {\n  insertMoney(amount: number): void;\n  selectProduct(code: string): void;\n  dispense(): void;\n}\n\n// 2. Estados Concretos\nclass WaitingForMoneyState implements VendingState {\n  constructor(private machine: VendingMachine) {}\n\n  insertMoney(amount: number) {\n    this.machine.addBalance(amount);\n    this.machine.setState(new HasMoneyState(this.machine));\n    console.log(`Dinero insertado: $${amount}`);\n  }\n\n  selectProduct(code: string) {\n    console.log('Primero debe insertar dinero');\n  }\n\n  dispense() {\n    console.log('Primero debe insertar dinero');\n  }\n}\n\nclass HasMoneyState implements VendingState {\n  constructor(private machine: VendingMachine) {}\n\n  insertMoney(amount: number) {\n    console.log('Ya tiene dinero insertado');\n  }\n\n  selectProduct(code: string) {\n    this.machine.setProduct(code);\n    this.machine.setState(new DispensingState(this.machine));\n    console.log(`Producto seleccionado: ${code}`);\n  }\n\n  dispense() {\n    console.log('Primero seleccione un producto');\n  }\n}\n\nclass DispensingState implements VendingState {\n  constructor(private machine: VendingMachine) {}\n\n  insertMoney(amount: number) {\n    console.log('No puede insertar dinero mientras dispensa');\n  }\n\n  selectProduct(code: string) {\n    console.log('Ya está dispensando un producto');\n  }\n\n  dispense() {\n    console.log('Producto dispensado');\n    this.machine.setState(new WaitingForMoneyState(this.machine));\n  }\n}\n\n// 3. Contexto\nclass VendingMachine {\n  private state: VendingState;\n  private balance = 0;\n\n  constructor() {\n    this.state = new WaitingForMoneyState(this);\n  }\n\n  setState(state: VendingState) { this.state = state; }\n  addBalance(amount: number) { this.balance += amount; }\n  setProduct(code: string) { /* ... */ }\n\n  insertMoney(amount: number) { this.state.insertMoney(amount); }\n  selectProduct(code: string) { this.state.selectProduct(code); }\n  dispense() { this.state.dispense(); }\n}\n\n// Uso:\nconst vm = new VendingMachine();\nvm.dispense();          // 'Primero debe insertar dinero'\nvm.insertMoney(100);    // 'Dinero insertado: $100'\nvm.insertMoney(50);     // 'Ya tiene dinero insertado'\nvm.selectProduct('A1'); // 'Producto seleccionado: A1'\nvm.dispense();          // 'Producto dispensado'"
+    },
+    "prosCons": {
+      "pros": [
+        "Principio de Responsabilidad Única: cada estado encapsula su propio comportamiento.",
+        "Principio Abierto/Cerrado (OCP): agregar nuevos estados no modifica los existentes.",
+        "Elimina condicionales complejos: adiós a los `if/else` y `switch` gigantes sobre el estado.",
+        "Transiciones de estado explícitas: cada estado define a qué otros estados puede transicionar.",
+        "Testeable de forma aislada: cada estado se prueba por separado."
+      ],
+      "cons": [
+        "Aumenta el número de clases: cada estado requiere su propia clase.",
+        "Puede ser excesivo si solo tienes 2-3 estados simples. A veces un `switch` pequeño alcanza.",
+        "Las transiciones entre estados pueden volverse complejas si hay muchos caminos posibles.",
+        "El contexto puede volverse un \"god object\" si mantiene demasiado estado que los estados necesitan compartir."
+      ]
+    },
+    "whenToUse": "Usá State cuando tengas un objeto que cambia su comportamiento según su estado interno, y tengas múltiples estados con comportamientos distintos. Es ideal para: máquinas de estados (ordenes, conexiones, formularios), objetos con ciclo de vida complejo, juego con estados de personaje, y cualquier caso donde tengas un `switch` o `if/else` que verifica el estado en cada método.",
+    "whenNotToUse": "NO uses State si solo tienes 2 estados simples que rara vez cambian. Tampoco si los estados no tienen comportamientos significativamente diferentes entre sí. Si el objeto no cambia de comportamiento según su estado, o si las transiciones son triviales, probablemente no necesitás el patrón State."
+  },
+  "codeBefore": "class Order {\n  private status: string = 'pending';\n\n  ship() {\n    if (this.status === 'pending') {\n      console.log('No puede enviar: pedido pendiente');\n    } else if (this.status === 'paid') {\n      this.status = 'shipped';\n      console.log('Pedido enviado');\n    } else if (this.status === 'shipped') {\n      console.log('Ya está enviado');\n    } else if (this.status === 'delivered') {\n      console.log('Ya está entregado');\n    }\n  }\n\n  deliver() {\n    if (this.status === 'pending') {\n      console.log('No puede entregar: pedido pendiente');\n    } else if (this.status === 'paid') {\n      console.log('No puede entregar: primero debe enviar');\n    } else if (this.status === 'shipped') {\n      this.status = 'delivered';\n      console.log('Pedido entregado');\n    } else if (this.status === 'delivered') {\n      console.log('Ya está entregado');\n    }\n  }\n\n  cancel() {\n    if (this.status === 'pending') {\n      this.status = 'cancelled';\n      console.log('Pedido cancelado');\n    } else if (this.status === 'paid') {\n      this.status = 'cancelled';\n      console.log('Pedido cancelado con reembolso');\n    } else {\n      console.log('No se puede cancelar en estado: ' + this.status);\n    }\n  }\n}",
+  "codeAfter": "// 1. Interfaz común\ninterface OrderState {\n  ship(order: Order): void;\n  deliver(order: Order): void;\n  cancel(order: Order): void;\n}\n\n// 2. Estados concretos\nclass PendingState implements OrderState {\n  ship(order: Order) {\n    console.log('No puede enviar: pedido pendiente');\n  }\n  deliver(order: Order) {\n    console.log('No puede entregar: pedido pendiente');\n  }\n  cancel(order: Order) {\n    order.setState(new CancelledState());\n    console.log('Pedido cancelado');\n  }\n}\n\nclass PaidState implements OrderState {\n  ship(order: Order) {\n    order.setState(new ShippedState());\n    console.log('Pedido enviado');\n  }\n  deliver(order: Order) {\n    console.log('No puede entregar: primero debe enviar');\n  }\n  cancel(order: Order) {\n    order.setState(new CancelledState());\n    console.log('Pedido cancelado con reembolso');\n  }\n}\n\n// 3. El Contexto delega al estado actual\nclass Order {\n  private state: OrderState = new PendingState();\n\n  setState(state: OrderState) { this.state = state; }\n  ship() { this.state.ship(this); }\n  deliver() { this.state.deliver(this); }\n  cancel() { this.state.cancel(this); }\n}",
+  "exercise": {
+    "title": "Reto de Implementación",
+    "fileName": "FlujoDeDocumento.ts",
+    "statement": "Implementa un flujo de documento que pasa por los estados Draft, Review y Published usando el patrón State.",
+    "instructions": "Un documento comienza como borrador (Draft). Puede ser enviado a revisión (Review), donde puede ser aprobado o rechazado. Si se aprueba, pasa a publicado (Published). Desde cualquier estado, el documento puede ser archivado. Implementa las transiciones de estado y las acciones disponibles en cada uno.",
+    "acceptanceCriteria": [
+      "Crea una interfaz `DocumentState` con métodos para las acciones del documento.",
+      "Implementa los estados concretos `DraftState`, `ReviewState` y `PublishedState`.",
+      "El `Document` contexto delega todas las acciones a su estado actual.",
+      "Las transiciones entre estados funcionan correctamente (Draft → Review → Published)."
+    ],
+    "starterCode": "// TODO: Define DocumentState interface here\n\n// TODO: Implement concrete states: DraftState, ReviewState, PublishedState\n\nclass Document {\n  private state: DocumentState;\n\n  constructor(private title: string) {\n    // TODO: Start in DraftState\n  }\n\n  setState(state: DocumentState) { this.state = state; }\n\n  // TODO: Delegate these methods to current state\n  submitForReview() { /* ... */ }\n  approve() { /* ... */ }\n  reject() { /* ... */ }\n  archive() { /* ... */ }\n}"
+  }
+}

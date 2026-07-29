@@ -1,0 +1,77 @@
+{
+  "slug": "singleton",
+  "title": "Singleton",
+  "category": "CREACIONAL",
+  "categoryLabel": "Patrón Creacional",
+  "difficulty": "Fácil",
+  "difficultyLevel": 1,
+  "description": "Garantiza que una clase tenga una sola instancia y proporciona un punto de acceso global a ella. El más simple estructuralmente pero el más controversial por el acoplamiento global que crea.",
+  "codeTag": "CREATIONAL_05",
+  "theory": {
+    "problem": "El Problema de las Instancias Múltiples",
+    "problemDescription": "Imagina que tenés un Logger que escribe a un archivo. Si creás múltiples instancias con `new Logger()`, cada una abre su propio archivo, los logs se mezclan, y podés tener race conditions. Lo mismo pasa con un Connection Pool de DB: si cada parte de la app crea su propio pool, terminás con 50 conexiones abiertas en lugar de 10 compartidas. Singleton garantiza que SOLO EXISTA UNA instancia compartida.",
+    "beforeAfter": {
+      "before": "Instancias Múltiples",
+      "after": "Instancia Única"
+    }
+  },
+  "analogy": {
+    "title": "La Analogía del Presidente",
+    "description": "Un país tiene un solo presidente a la vez. Si intentás elegir otro, el anterior deja de serlo. No podés tener dos presidentes gobernando simultáneamente — causaría caos. Singleton funciona igual: solo puede existir una instancia de la clase. Si ya existe, `getInstance()` te devuelve la misma en lugar de crear una nueva.",
+    "quote": "Solo hay uno. Si ya existe, te devuelvo ese. Si no, lo creo una vez."
+  },
+  "realCases": [
+    {
+      "title": "Logger Global",
+      "description": "Casi todas las aplicaciones tienen un Logger global que escribe a consola, archivo o servicio externo. Usar Singleton garantiza que todos los módulos escriban al mismo destino de logs y que la configuración del logger (nivel, formato) se aplique uniformemente."
+    },
+    {
+      "title": "Configuration Manager",
+      "description": "Un AppConfig que carga variables de entorno una vez al inicio y las provee a toda la aplicación. Singleton evita que cada módulo lea `.env` por separado y garantiza consistencia: si la config cambia en runtime, todos los módulos ven el cambio."
+    },
+    {
+      "title": "DB Connection Pool",
+      "description": "Un pool de conexiones a base de datos es un Singleton clásico: no querés 50 conexiones abiertas, querés un pool centralizado que las gestione. El pool se crea una vez al inicio y se reutiliza en toda la aplicación."
+    }
+  ],
+  "sections": {
+    "howItWorks": {
+      "title": "¿Cómo funciona Singleton?",
+      "description": "El patrón Singleton se compone de tres elementos:\n\n1. **Constructor Privado**: Impide que otros creen instancias con `new`. Solo la propia clase puede instanciarse.\n\n2. **Campo Estático `instance`**: Almacena la única instancia de la clase. Es `null` o `undefined` hasta que se crea la primera vez.\n\n3. **Método Estático `getInstance()`**: Retorna la instancia existente o crea una nueva si no existe. Es el único punto de acceso.\n\nEn JavaScript/TypeScript moderno, el Singleton más simple es un módulo con exportaciones — el módulo ES6 se ejecuta una vez y su estado es global. Pero para clases con comportamiento más complejo, el patrón clásico sigue siendo útil.",
+      "structureCode": "// === ESTRUCTURA DEL PATRÓN SINGLETON ===\n\n// Clásico — constructor privado + getInstance()\nclass Logger {\n  private static instance: Logger;\n  private logs: string[] = [];\n\n  // Constructor privado — nadie puede hacer new Logger()\n  private constructor() {\n    console.log('Logger inicializado');\n  }\n\n  static getInstance(): Logger {\n    if (!Logger.instance) {\n      Logger.instance = new Logger();\n    }\n    return Logger.instance;\n  }\n\n  log(message: string) {\n    const entry = `[${new Date().toISOString()}] ${message}`;\n    this.logs.push(entry);\n    console.log(entry);\n  }\n\n  getLogs(): string[] {\n    return [...this.logs];\n  }\n}\n\n// Uso:\nconst logger1 = Logger.getInstance();\nconst logger2 = Logger.getInstance();\nconsole.log(logger1 === logger2); // true — misma instancia\n\nlogger1.log('App iniciada');\nlogger2.log('Request recibido');\nconsole.log(logger1.getLogs()); // ['App iniciada', 'Request recibido']\n\n// new Logger(); // Error: constructor is private\n\n// --- Alternativa moderna: Module Singleton ---\n// logger.ts\nlet instance: Logger | null = null;\n\nexport function getLogger(): Logger {\n  if (!instance) {\n    instance = new Logger();\n  }\n  return instance;\n}"
+    },
+    "prosCons": {
+      "pros": [
+        "Garantiza una única instancia: no importa cuántas veces llames `getInstance()`, siempre es la misma.",
+        "Punto de acceso global: cualquier módulo puede acceder al Singleton sin pasar dependencias.",
+        "Lazy initialization: la instancia se crea solo cuando se necesita por primera vez.",
+        "Control del lifecycle: podés controlar cuándo se crea y (con reset()) cuándo se destruye.",
+        "Útil para recursos compartidos: loggers, pools de conexiones, caches, configs."
+      ],
+      "cons": [
+        "Acoplamiento global: cualquier módulo puede acceder al Singleton desde cualquier lugar, creando dependencias ocultas.",
+        "Dificulta testing: no podés inyectar un mock fácilmente — el Singleton está hardcodeado en `getInstance()`.",
+        "Violación de SRP: una clase que controla SU creación Y hace su trabajo tiene dos responsabilidades.",
+        "Problemas en concurrencia: en runtime multi-threaded, dos threads pueden crear la instancia simultáneamente si no hay sincronización.",
+        "Dependency Injection es la alternativa moderna: frameworks como NestJS, InversifyJS o tsyringe resuelven el mismo problema sin acoplamiento global."
+      ]
+    },
+    "whenToUse": "Usá Singleton SOLO cuando necesitás exactamente una instancia de una clase y esta debe ser accesible globalmente. Casos válidos: loggers, configuration managers, connection pools, caches, y servicios de mensaje (message bus). Siempre evaluá si un Dependency Injection Container resuelve el mismo problema con menos acoplamiento.",
+    "whenNotToUse": "NO uses Singleton si podés resolver el problema con Dependency Injection — es la alternativa moderna y más testable. Tampoco si la clase necesita ser instanciada múltiples veces con estados diferentes (ej: múltiples usuarios). Singleton acopla globalmente, dificulta testing unitario, y crea dependencias ocultas que no se ven en los parámetros de una función. En NestJS, tsyringe o InversifyJS, un simple `@Injectable()` con scope `Singleton` resuelve lo mismo sin los problemas del patrón."
+  },
+  "codeBefore": "class Logger {\n  private logs: string[] = [];\n  log(message: string) {\n    this.logs.push(message);\n    console.log(message);\n  }\n}\n\n// Cada módulo crea su propia instancia — logs dispersos\nconst loggerA = new Logger();\nconst loggerB = new Logger();\nconst loggerC = new Logger();\n\nloggerA.log('Init'); // Solo en loggerA\nloggerB.log('Request'); // Solo en loggerB\n// Los tres tienen logs diferentes — no hay fuente única de verdad",
+  "codeAfter": "// Singleton — siempre la misma instancia\nclass Logger {\n  private static instance: Logger;\n  private logs: string[] = [];\n\n  private constructor() {}\n\n  static getInstance(): Logger {\n    if (!Logger.instance) {\n      Logger.instance = new Logger();\n    }\n    return Logger.instance;\n  }\n\n  log(message: string) {\n    this.logs.push(message);\n    console.log(message);\n  }\n}\n\n// Todos los módulos comparten la misma instancia\nconst logger = Logger.getInstance();\nlogger.log('Init');    // Guardado centralizado\nlogger.log('Request'); // Mismo logger, mismo array de logs",
+  "exercise": {
+    "title": "Reto de Implementación",
+    "fileName": "AppConfig_Manager.ts",
+    "statement": "Implementa un Singleton `ConfigManager` que cargue configuración una vez y la provea globalmente.",
+    "instructions": "Creá una clase `ConfigManager` que: (1) cargue configuración de un objeto o archivo, (2) garantice una sola instancia, (3) provea acceso a los valores por clave, (4) permita obtener toda la config. Actualmente la clase tiene constructor público — refactorizalo a Singleton.",
+    "acceptanceCriteria": [
+      "Constructor privado: nadie puede hacer `new ConfigManager()` fuera de la clase.",
+      "Método estático `getInstance()` que retorna la misma instancia siempre.",
+      "El método get(key) retorna el valor de configuración para una clave.",
+      "La configuración se carga una sola vez — `getInstance()` no recarga en llamadas subsecuentes."
+    ],
+    "starterCode": "// BUG: constructor público — múltiples instancias\nexport class ConfigManager {\n  private config: Record<string, string> = {};\n\n  constructor() {\n    // Simula carga de config (podría ser de .env o archivo)\n    this.config = {\n      DB_HOST: 'localhost',\n      DB_PORT: '5432',\n      API_KEY: 'secret-123',\n    };\n  }\n\n  get(key: string): string | undefined {\n    return this.config[key];\n  }\n\n  getAll(): Record<string, string> {\n    return { ...this.config };\n  }\n}\n\n// BUG: cada módulo crea su propia instancia\nconst configA = new ConfigManager();\nconst configB = new ConfigManager();\nconsole.log(configA === configB); // false — deberían ser la misma"
+  }
+}

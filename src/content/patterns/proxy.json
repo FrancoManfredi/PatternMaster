@@ -1,0 +1,76 @@
+{
+  "slug": "proxy",
+  "title": "Proxy",
+  "category": "ESTRUCTURAL",
+  "categoryLabel": "Patrón Estructural",
+  "difficulty": "Intermedio",
+  "difficultyLevel": 2,
+  "description": "Proporciona un sustituto o representante de otro objeto para controlar el acceso a él. Proxy agrega una capa de control entre el cliente y el objeto real.",
+  "codeTag": "STRUCTURAL_07",
+  "theory": {
+    "problem": "El Problema del Acceso Directo a Recursos Costosos",
+    "problemDescription": "Imagina que tenés una galería de imágenes de alta resolución. Cada imagen ocupa 50MB y carga en 3 segundos. Si cargás TODAS las imágenes al abrir la galería, el usuario espera 30 segundos con 10 imágenes — una experiencia terrible. La mayoría de las imágenes nunca se ven porque el usuario solo hace scroll por las primeras. El patrón Proxy sugiere crear un sustituto que cargue la imagen real solo cuando se necesite, no antes.",
+    "beforeAfter": {
+      "before": "Carga Todas las Imágenes al Iniciar → 30s de Espera",
+      "after": "Proxy Virtual: Carga Solo Cuando se Muestra → 0s de Espera"
+    }
+  },
+  "analogy": {
+    "title": "La Analogía del Portero",
+    "description": "Un portero en un edificio de oficinas no deja entrar a cualquiera. Verifica credenciales, anota visitantes, yredirige a las oficinas correctas. El portero es un Proxy: controla quién accede al edificio (el objeto real) sin que el visitante (el cliente) necesite pasar por todos los controles de seguridad cada vez.",
+    "quote": "El Proxy protege al objeto real — controla acceso, caching y lazy loading."
+  },
+  "realCases": [
+    {
+      "title": "loading=\"lazy\" en imágenes web",
+      "description": "El atributo loading=\"lazy\" es un Proxy virtual del navegador: las imágenes solo se cargan cuando entran en el viewport. El navegador actúa como proxy que difiere la carga HTTP real."
+    },
+    {
+      "title": "Lazy Loading en ORMs",
+      "description": "Prisma y Sequelize usan Proxy para lazy-loading: cuando accedés a `user.posts`, el ORM intercepta la propiedad y ejecuta la query SQL solo en ese momento, no al crear el objeto User."
+    },
+    {
+      "title": "CDN como Cache Proxy",
+      "description": "Un CDN como Cloudflare actúa como Proxy de caching: intercepta requests HTTP, sirve contenido cacheado si existe, y soloContacta el servidor original si no hay caché. El cliente no sabe que hay un proxy por medio."
+    }
+  ],
+  "sections": {
+    "howItWorks": {
+      "title": "¿Cómo funciona Proxy?",
+      "description": "El patrón Proxy se compone de tres actores principales:\n\n1. **Interfaz (Servicio)**: Define la interfaz común para el Objeto Real y el Proxy. El cliente interactúa con esta interfaz sin saber si está hablando con el objeto real o con el proxy.\n\n2. **Objeto Real**: Implementa la funcionalidad real. Es costoso de crear o acceder — por eso se protege con un Proxy.\n\n3. **Proxy**: Implementa la misma interfaz que el Objeto Real. Mantiene una referencia al objeto real y controla el acceso. Puede agregar lazy loading, caching, logging, o control de acceso.\n\nLa clave está en la transparencia: el cliente usa el Proxy como si fuera el Objeto Real. El Proxy decide cuándo crear, cachear o delegar al objeto real.",
+      "structureCode": "// === ESTRUCTURA DEL PATRÓN PROXY ===\n\n// 1. Interfaz (Servicio)\ninterface Image {\n  display(): void;\n  getInfo(): string;\n}\n\n// 2. Objeto Real (costoso de crear)\nclass HighResImage implements Image {\n  private loaded = false;\n\n  constructor(private filename: string) {\n    console.log(`⏳ Cargando imagen de alta resolución: ${filename}...`);\n    // Simular carga lenta (3 segundos)\n    this.simulateLoading();\n    this.loaded = true;\n    console.log(`✅ Imagen cargada: ${filename}`);\n  }\n\n  private simulateLoading() {\n    // En producción: descarga de disco/red, decodifica, etc.\n  }\n\n  display() {\n    console.log(`🖼️ Mostrando ${this.filename} en alta resolución`);\n  }\n\n  getInfo() {\n    return `${this.filename} (${this.loaded ? 'cargada' : 'no cargada'})`;\n  }\n}\n\n// 3. Proxy (controla el acceso)\nclass ImageProxy implements Image {\n  private realImage: HighResImage | null = null;\n\n  constructor(private filename: string) {}\n\n  display() {\n    if (!this.realImage) {\n      // Lazy loading: crear solo cuando se necesita\n      this.realImage = new HighResImage(this.filename);\n    }\n    this.realImage.display();\n  }\n\n  getInfo() {\n    return this.realImage ? this.realImage.getInfo() : `${this.filename} (proxy - no cargada)`;\n  }\n}\n\n// Uso:\nconst gallery: Image[] = [\n  new ImageProxy('foto1.jpg'),\n  new ImageProxy('foto2.jpg'),\n  new ImageProxy('foto3.jpg'),\n];\n\n// Solo se carga foto1.jpg cuando se muestra\nconsole.log('Galería creada — 0 imágenes cargadas');\ngallery[0].display(); // Solo esta carga la imagen real\ngallery[1].display(); // Esta también carga\n// foto3.jpg nunca se carga si el usuario no la ve"
+    },
+    "prosCons": {
+      "pros": [
+        "Lazy loading: los objetos costosos se crean solo cuando se necesitan.",
+        "Control de acceso: podés validar permisos antes de acceder al objeto real.",
+        "Caching: el Proxy puede almacenar resultados y evitar llamadas repetidas.",
+        "Logging y monitoreo: el Proxy puede registrar accesos sin modificar el objeto real.",
+        "Transparencia: el cliente no sabe que está hablando con un Proxy."
+      ],
+      "cons": [
+        "Complejidad adicional: una capa extra de código que puede parecer innecesaria.",
+        "Overhead de indirección: cada llamada pasa por el Proxy antes de llegar al objeto real.",
+        "Latencia inicial: la primera llamada puede ser más lenta (creación del objeto real).",
+        "Difícil de debuggear: el comportamiento del Proxy puede ocultar bugs en el objeto real."
+      ]
+    },
+    "whenToUse": "Usá Proxy cuando necesités controlar el acceso a un objeto costoso o sensible. Es ideal para: lazy loading de imágenes/recursos pesados, caching de resultados de API, logging de accesos, control de permisos, o cuando el objeto real no está disponible (red, base de datos).",
+    "whenNotToUse": "NO uses Proxy si el objeto real es barato de crear y acceder — sería una capa innecesaria. Tampoco si no necesitás control de acceso, caching ni lazy loading. Si el Proxy agrega complejidad sin beneficio medible, accedé al objeto real directamente."
+  },
+  "codeBefore": "// Carga TODAS las imágenes al iniciar — lento y wasteful\nclass Gallery {\n  private images: HighResImage[] = [];\n\n  constructor(filenames: string[]) {\n    // Carga todas las imágenes de una vez\n    for (const file of filenames) {\n      this.images.push(new HighResImage(file)); // 3s cada una\n    }\n  }\n\n  displayAll() {\n    this.images.forEach(img => img.display());\n  }\n}\n\n// 10 imágenes × 3s = 30s de carga inicial\nconst gallery = new Gallery(['foto1.jpg', 'foto2.jpg', ... 'foto10.jpg']);",
+  "codeAfter": "// Proxy con lazy loading — carga solo cuando se necesita\nconst gallery: Image[] = [\n  new ImageProxy('foto1.jpg'),\n  new ImageProxy('foto2.jpg'),\n  // ...\n  new ImageProxy('foto10.jpg'),\n];\n\n// 0s de carga inicial — las imágenes se cargan bajo demanda\ngallery[0].display(); // Solo foto1.jpg se carga ahora\ngallery[1].display(); // Solo foto2.jpg se carga ahora\n// El resto nunca se carga si el usuario no las ve",
+  "exercise": {
+    "title": "Reto de Implementación",
+    "fileName": "CargadorDeImagenes.ts",
+    "statement": "Implementa un proxy virtual para imágenes que haga lazy loading: la imagen de alta resolución solo se carga cuando se muestra por primera vez.",
+    "instructions": "Creá una interfaz `Image` con `display()` y `getInfo()`. Implementá `HighResImage` que simule una carga lenta (setTimeout). Creá `ImageProxy` que lazy-load la imagen real solo cuando `display()` se llama por primera vez. Demostrá que la galería se crea instantáneamente pero las imágenes se cargan bajo demanda.",
+    "acceptanceCriteria": [
+      "Define la interfaz `Image` con `display()` y `getInfo()`.",
+      "Implementa `HighResImage` con carga simulada (delay en constructor).",
+      "Crea `ImageProxy` que mantenga `realImage: null` y lazy-init en `display()`.",
+      "Demostrá que la galería se crea sin cargar imágenes, y cada imagen carga solo cuando se muestra."
+    ],
+    "starterCode": "// TODO: Define Image interface\n\n// TODO: Implement HighResImage class with simulated loading delay\n\nclass HighResImage implements Image {\n  private loaded = false;\n\n  constructor(private filename: string) {\n    // TODO: Simulate loading delay (console.log + setTimeout)\n  }\n\n  display() {\n    // TODO: Show image\n  }\n\n  getInfo() {\n    // TODO: Return image info\n  }\n}\n\n// TODO: Implement ImageProxy with lazy loading\n\nclass ImageProxy implements Image {\n  private realImage: HighResImage | null = null;\n\n  constructor(private filename: string) {}\n\n  display() {\n    // TODO: Lazy init realImage on first display()\n  }\n\n  getInfo() {\n    // TODO: Return proxy info or delegate to realImage\n  }\n}\n\n// Demo:\nconsole.log('Creando galería...');\nconst gallery: Image[] = [\n  new ImageProxy('foto1.jpg'),\n  new ImageProxy('foto2.jpg'),\n  new ImageProxy('foto3.jpg'),\n];\nconsole.log('Galería lista — 0 imágenes cargadas');\n\nconsole.log('\\nMostrando foto1...');\ngallery[0].display(); // Solo esta carga\n\nconsole.log('\\nMostrando foto2...');\ngallery[1].display(); // Solo esta carga\n"
+  }
+}

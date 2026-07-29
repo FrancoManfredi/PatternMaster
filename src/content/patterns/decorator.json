@@ -1,0 +1,76 @@
+{
+  "slug": "decorator",
+  "title": "Decorator",
+  "category": "ESTRUCTURAL",
+  "categoryLabel": "Patrón Estructural",
+  "difficulty": "Intermedio",
+  "difficultyLevel": 2,
+  "description": "Agrega responsabilidades adicionales a un objeto de forma dinámica. Decorator proporciona una alternativa flexible a la herencia para extender la funcionalidad.",
+  "codeTag": "STRUCTURAL_04",
+  "theory": {
+    "problem": "El Problema de la Explosión de Subclases",
+    "problemDescription": "Imagina que estás construyendo un sistema de bebidas. Tenés Espresso, HouseBlend, DarkRoast como bases, y querés agregar leche, chocolate y crema como extras. Con herencia, terminás creando EspressoConLeche, EspressoConChocolate, EspressoConLecheYChocolate... Cada combinación posible es una subclase nueva. El número de clases crece exponencialmente con cada nuevo aditivo. El patrón Decorator sugiere envolver los objetos en capas decorativas que agregan comportamiento sin modificar la clase base.",
+    "beforeAfter": {
+      "before": "Explosión de Subclases por Combinaciones",
+      "after": "Capas Apilables Dinámicamente"
+    }
+  },
+  "analogy": {
+    "title": "La Analogía del Sándwich",
+    "description": "Pedís un sándwich básico de jamón y queso. Pero podés agregar lechuga, tomate, bacon, mostaza, mayonesa... Cada ingrediente es un Decorator que envuelve al anterior. El sándwich base no cambia — solo se le van agregando capas. El precio total se calcula sumando el precio de cada capa.",
+    "quote": "No modifiques el objeto — envolvelo con capas que agreguen comportamiento."
+  },
+  "realCases": [
+    {
+      "title": "Streams en Node.js y Java",
+      "description": "Los streams se decoran con capas: `createReadStream()` envuelto en `zlib.createGzip()` envuelto en `crypto.createCipher()`. Cada capa agrega transformación sin modificar el stream original."
+    },
+    {
+      "title": "Middleware de Express",
+      "description": "Cada middleware es un Decorator que envuelve el objeto request: autenticación, logging, CORS, rate limiting. Se apilan dinámicamente y cada uno agrega una capa de comportamiento."
+    },
+    {
+      "title": "Componentes de UI con HOCs",
+      "description": "En React, los Higher-Order Components son Decorators funcionales: `withAuth(withLogging(MyComponent))`. Cada HOC agrega comportamiento (auth, logging, analytics) sin modificar el componente original."
+    }
+  ],
+  "sections": {
+    "howItWorks": {
+      "title": "¿Cómo funciona Decorator?",
+      "description": "El patrón Decorator se compone de cuatro actores principales:\n\n1. **Componente (Interfaz)**: Define la interfaz común para objetos concretos y decoradores. Generalmente es una interfaz o clase abstracta con un método principal.\n\n2. **Componente Concreto**: La implementación base del objeto. Tiene la funcionalidad principal sin decorar.\n\n3. **Decorador Abstracto**: Implementa la interfaz del Componente y mantiene una referencia a un Componente envuelto. Puede agregar comportamiento antes o después de delegar al objeto envuelto.\n\n4. **Decoradores Concretos**: Implementan el comportamiento adicional. Llaman al método del objeto envuelto y agregan su propia lógica.\n\nLa clave está en que los Decorators son transparentes para el cliente: usan la misma interfaz que el componente original, por lo que pueden apilarse dinámicamente sin que el cliente sepa cuántas capas hay.",
+      "structureCode": "// === ESTRUCTURA DEL PATRÓN DECORATOR ===\n\n// 1. Componente (interfaz común)\ninterface Beverage {\n  getCost(): number;\n  getDescription(): string;\n}\n\n// 2. Componentes Concretos (las bases)\nclass Espresso implements Beverage {\n  getCost() { return 1.50; }\n  getDescription() { return 'Espresso'; }\n}\n\nclass HouseBlend implements Beverage {\n  getCost() { return 0.89; }\n  getDescription() { return 'House Blend Coffee'; }\n}\n\n// 3. Decorador Abstracto (la base para los extras)\nabstract class BeverageDecorator implements Beverage {\n  constructor(protected beverage: Beverage) {}\n\n  abstract getCost(): number;\n  abstract getDescription(): string;\n}\n\n// 4. Decoradores Concretos (los extras)\nclass Milk extends BeverageDecorator {\n  getCost() { return this.beverage.getCost() + 0.20; }\n  getDescription() { return this.beverage.getDescription() + ', Leche'; }\n}\n\nclass Mocha extends BeverageDecorator {\n  getCost() { return this.beverage.getCost() + 0.30; }\n  getDescription() { return this.beverage.getDescription() + ', Chocolate'; }\n}\n\nclass Whip extends BeverageDecorator {\n  getCost() { return this.beverage.getCost() + 0.15; }\n  getDescription() { return this.beverage.getDescription() + ', Crema'; }\n}\n\n// Uso — capas dinámicas:\nlet beverage: Beverage = new Espresso();\nbeverage = new Milk(beverage);      // Espresso + Leche\nbeverage = new Mocha(beverage);     // Espresso + Leche + Chocolate\nbeverage = new Whip(beverage);      // Espresso + Leche + Chocolate + Crema\n\nconsole.log(beverage.getDescription()); // Espresso, Leche, Chocolate, Crema\nconsole.log(beverage.getCost());        // 2.15"
+    },
+    "prosCons": {
+      "pros": [
+        "Responsabilidad Única: cada Decorator se ocupa de UNA funcionalidad adicional.",
+        "Principio Abierto/Cerrado (OCP): podés agregar nuevas funcionalidades sin modificar las existentes.",
+        "Flexibilidad: las combinaciones se crean en tiempo de ejecución, no en tiempo de compilación.",
+        "Evita la explosión de subclases: N extras = N clases, no 2^N combinaciones.",
+        "Composición sobre herencia: preferís composición dinámica en lugar de herencia estática."
+      ],
+      "cons": [
+        "Muchos objetos pequeños: cada capa es un objeto nuevo, lo que puede generar overhead.",
+        "Difícil de eliminar un decorador específico: no hay forma directa de quitar una capa intermedia.",
+        "El orden de los decoradores puede importar: A(B(x)) !== B(A(x)) en algunos casos.",
+        "Debugging complicado: la pila de decoradores puede hacer difícil rastrear errores."
+      ]
+    },
+    "whenToUse": "Usá Decorator cuando necesités agregar responsabilidades a objetos individualmente de forma dinámica. Es ideal para: bebidas/comidas con extras, streams con transformaciones, middleware stacks, componentes UI con HOCs, o cuando la herencia generaría demasiadas subclases por combinaciones.",
+    "whenNotToUse": "NO uses Decorator si las funcionalidades son invariantes — la herencia simple alcanza. Tampoco si necesitás eliminar funcionalidades en tiempo de ejecución (Decorator solo agrega, no quita). Si el orden de las capas no importa y solo tenés 2-3 combinaciones fijas, quizás una jerarquía de clases sea más clara."
+  },
+  "codeBefore": "// Explosión de subclases — cada combinación es una clase\nclass EspressoWithMilk extends Espresso {\n  getCost() { return super.getCost() + 0.20; }\n  getDescription() { return 'Espresso con Leche'; }\n}\n\nclass EspressoWithMocha extends Espresso {\n  getCost() { return super.getCost() + 0.30; }\n  getDescription() { return 'Espresso con Chocolate'; }\n}\n\nclass EspressoWithMilkAndMocha extends Espresso {\n  getCost() { return super.getCost() + 0.50; }\n  getDescription() { return 'Espresso con Leche y Chocolate'; }\n}\n// Cada combinación nueva = nueva subclase",
+  "codeAfter": "// Decorators apilables — combinaciones dinámicas\nlet beverage: Beverage = new Espresso();\nbeverage = new Milk(beverage);      // +$0.20\nbeverage = new Mocha(beverage);     // +$0.30\n\nconsole.log(beverage.getDescription()); // Espresso, Leche, Chocolate\nconsole.log(beverage.getCost());        // 2.00\n\n// Agregá Crema en tiempo de ejecución\nbeverage = new Whip(beverage);      // +$0.15\nconsole.log(beverage.getCost());        // 2.15",
+  "exercise": {
+    "title": "Reto de Implementación",
+    "fileName": "DecoradorDeCafe.ts",
+    "statement": "Implementa un sistema de bebidas con extras usando el patrón Decorator.",
+    "instructions": "Tenés bebidas base (Espresso, HouseBlend) y extras (Leche, Chocolate, Crema). Creá una interfaz `Beverage` y decoradores que envuelvan bebidas y agreguen costo y descripción. Cada decorador debe calcular el costo sumando su precio al de la bebida envuelta.",
+    "acceptanceCriteria": [
+      "Define la interfaz `Beverage` con `getCost()` y `getDescription()`.",
+      "Implementa `Espresso` y `HouseBlend` como componentes concretos.",
+      "Crea la clase abstracta `BeverageDecorator` que implemente `Beverage` y mantenga una referencia al beverage envuelto.",
+      "Implementa `Milk`, `Mocha` y `Whip` como decoradores concretos."
+    ],
+    "starterCode": "// TODO: Define Beverage interface\n\n// TODO: Implement Espresso class\n\n// TODO: Implement HouseBlend class\n\n// TODO: Create BeverageDecorator abstract class\n\n// TODO: Implement Milk decorator\n\n// TODO: Implement Mocha decorator\n\n// TODO: Implement Whip decorator\n\n// Demo:\nlet beverage: Beverage = new Espresso();\nbeverage = new Milk(beverage);\nbeverage = new Mocha(beverage);\nconsole.log(beverage.getDescription()); // Espresso, Leche, Chocolate\nconsole.log(beverage.getCost());        // 2.00\n"
+  }
+}

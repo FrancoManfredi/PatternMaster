@@ -1,0 +1,77 @@
+{
+  "slug": "composite",
+  "title": "Composite",
+  "category": "ESTRUCTURAL",
+  "categoryLabel": "Patrón Estructural",
+  "difficulty": "Intermedio",
+  "difficultyLevel": 2,
+  "description": "Compone objetos en estructuras de árbol para representar jerarquías parte-todo. Composite permite a los clientes tratar de la misma forma a objetos individuales y a composiciones de objetos.",
+  "codeTag": "STRUCTURAL_03",
+  "theory": {
+    "problem": "El Problema de los Objetos Jerárquicos",
+    "problemDescription": "Imagina que estás construyendo un sistema de archivos. Tenés archivos individuales y carpetas que contienen archivos u otras carpetas. Para calcular el tamaño total, necesitás recorrer toda la estructura: si es un archivo, sumás su tamaño; si es una carpeta, entrás y repetís el proceso recursivamente. Pero el código cliente no debería distinguir entre archivo y carpeta — ambos deberían responder a `getSize()` de la misma forma. El patrón Composite sugiere definir una interfaz común para objetos simples y compuestos, de modo que el cliente pueda tratar uniformemente a todos.",
+    "beforeAfter": {
+      "before": "Código que distingue entre hojas y ramas",
+      "after": "Interfaz unificada para todos los nodos"
+    }
+  },
+  "analogy": {
+    "title": "La Analogía del Árbol de Navidad",
+    "description": "Un árbol de Navidad tiene decoraciones individuales (una estrella, una esfera, una luces) y grupos de decoraciones (una guirnalda que contiene luces). Cuando contás cuántas decoraciones hay, tratás igual a una esfera suelta que a una guirnalda con 20 luces: contás 1 en el primer caso y 20 en el segundo. La guirnalda es un Composite que sabe contar sus elementos internos.",
+    "quote": "Un objeto compuesto se comporta igual que uno simple — solo que por dentro tiene hijos."
+  },
+  "realCases": [
+    {
+      "title": "Componentes de UI en React/Vue",
+      "description": "Un componente `<Sidebar>` puede contener `<MenuItem>`, `<Button>`, y otros `<Sidebar>` anidados. Cada componente implementa `render()` de la misma forma, sin importar si es hoja o compuesto."
+    },
+    {
+      "title": "DOM y manipulación de elementos",
+      "description": "Un `<div>` puede contener texto, imágenes y otros `<div>`. `innerHTML` funciona igual en hojas que en ramas. `addEventListener` propaga eventos a través del árbol de forma transparente."
+    },
+    {
+      "title": "Organizaciones corporativas",
+      "description": "Un departamento puede contener empleados individuales u otros departamentos. Calcular el total de empleados recursivo funciona igual en ambos casos: cada nodo expone `getEmployeeCount()`."
+    }
+  ],
+  "sections": {
+    "howItWorks": {
+      "title": "¿Cómo funciona Composite?",
+      "description": "El patrón Composite se compone de tres actores principales:\n\n1. **Componente**: Define la interfaz común para objetos simples (hojas) y compuestos (ramas). Declara operaciones como `getSize()`, `add()`, `remove()`, etc.\n\n2. **Hoja (Leaf)**: Representa un objeto sin hijos. Implementa las operaciones del Componente directamente. No puede contener otros Componentes.\n\n3. **Composite (Compuesto)**: Contiene hijos que son Componentes (hojas u otros composites). Implementa las operaciones del Componente delegando a sus hijos. Gestiona la colección de hijos con `add()`, `remove()`, `getChild()`.\n\nLa clave está en que el cliente invoca operaciones en el Componente sin saber si es una Hoja o un Composite. El árbol se recorre recursivamente de forma transparente.",
+      "structureCode": "// === ESTRUCTURA DEL PATRÓN COMPOSITE ===\n\n// 1. Componente (interfaz común)\nabstract class FileSystemComponent {\n  constructor(protected name: string) {}\n\n  abstract getSize(): number;\n  abstract print(indent?: string): void;\n\n  // Operaciones opcionales que solo los Composite implementan\n  add(component: FileSystemComponent): void {\n    throw new Error('Cannot add to a leaf node');\n  }\n  remove(component: FileSystemComponent): void {\n    throw new Error('Cannot remove from a leaf node');\n  }\n}\n\n// 2. Hoja (Leaf)\nclass File extends FileSystemComponent {\n  constructor(name: string, private size: number) {\n    super(name);\n  }\n\n  getSize(): number {\n    return this.size;\n  }\n\n  print(indent = ''): void {\n    console.log(`${indent}📄 ${this.name} (${this.size}KB)`);\n  }\n}\n\n// 3. Composite (Compuesto)\nclass Folder extends FileSystemComponent {\n  private children: FileSystemComponent[] = [];\n\n  add(component: FileSystemComponent): void {\n    this.children.push(component);\n  }\n\n  remove(component: FileSystemComponent): void {\n    this.children = this.children.filter(c => c !== component);\n  }\n\n  getSize(): number {\n    // Suma recursiva de todos los hijos\n    return this.children.reduce((total, child) => total + child.getSize(), 0);\n  }\n\n  print(indent = ''): void {\n    console.log(`${indent}📁 ${this.name}/ (${this.getSize()}KB)`);\n    this.children.forEach(child => child.print(indent + '  '));\n  }\n}\n\n// Uso:\nconst root = new Folder('proyecto');\nconst src = new Folder('src');\nsrc.add(new File('index.ts', 5));\nsrc.add(new File('app.ts', 12));\nroot.add(src);\nroot.add(new File('package.json', 2));\n\nconsole.log(root.getSize()); // 19\nroot.print();"
+    },
+    "prosCons": {
+      "pros": [
+        "Uniformidad: el cliente trata igual a hojas y composites — no necesita `if/else` para distinguir.",
+        "Escalabilidad fácil: agregar nuevos tipos de nodos (hojas o composites) es trivial.",
+        " jerarquías complejas: podés construir árboles de任意 profundidad.",
+        "Simplifica el código cliente: una sola interfaz para toda la estructura.",
+        "Recursividad natural: las operaciones como `getSize()` o `print()` se propagan automáticamente."
+      ],
+      "cons": [
+        "Diseño restrictivo: puede ser difícil definir una interfaz común que funcione para todos los nodos.",
+        "Gestión de hijos: las operaciones `add()`, `remove()` pueden no ser relevantes para las hojas.",
+        " complejidad recursiva: los errores en la recursión pueden causar problemas difíciles de depurar.",
+        "Sobre-generalización: a veces es mejor tener interfaces separadas para hojas y composites."
+      ]
+    },
+    "whenToUse": "Usá Composite cuando tengas una estructura jerárquica donde los objetos individuales y los composiciones deben tratarse de la misma forma. Es ideal para: árboles de archivos y carpetas, componentes de UI anidados, estructuras organizacionales, menús con submenús, o cualquier caso donde una parte y el todo compartan la misma interfaz.",
+    "whenNotToUse": "NO uses Composite si la jerarquía es muy simple (solo 2-3 niveles con pocos nodos). Tampoco si las hojas y los composites tienen interfaces muy diferentes — forzar una interfaz común puede complicar más de lo que simplifica. Si no necesitás tratar uniformemente hojas y composites, quizás una jerarquía de clases tradicional sea más clara."
+  },
+  "codeBefore": "// Código que distingue entre archivos y carpetas\nclass FileSystem {\n  getTotalSize(items: (File | Folder)[]): number {\n    let total = 0;\n    for (const item of items) {\n      if (item instanceof File) {\n        total += item.size;\n      } else if (item instanceof Folder) {\n        // ¡Recursión manual!\n        for (const child of item.children) {\n          if (child instanceof File) {\n            total += child.size;\n          } else if (child instanceof Folder) {\n            // ¿Otro nivel de recursión?\n          }\n        }\n      }\n    }\n    return total;\n  }\n}\n// Cada operación nueva requiere más if/else anidados",
+  "codeAfter": "// Interfaz unificada — hojas y composites responden igual\nabstract class FileSystemComponent {\n  abstract getSize(): number;\n}\n\nclass File extends FileSystemComponent {\n  constructor(private name: string, private size: number) { super(); }\n  getSize() { return this.size; }\n}\n\nclass Folder extends FileSystemComponent {\n  private children: FileSystemComponent[] = [];\n  add(child: FileSystemComponent) { this.children.push(child); }\n  getSize() {\n    return this.children.reduce((sum, child) => sum + child.getSize(), 0);\n  }\n}\n\n// El cliente no distingue entre archivo y carpeta\nconst root = new Folder('root');\nroot.add(new File('readme.md', 2));\nconst src = new Folder('src');\nsrc.add(new File('app.ts', 10));\nroot.add(src);\nconsole.log(root.getSize()); // 12",
+  "exercise": {
+    "title": "Reto de Implementación",
+    "fileName": "SistemaDeArchivos.ts",
+    "statement": "Implementa un sistema de archivos compuesto donde archivos y carpetas respondan a la misma interfaz.",
+    "instructions": "Creá una interfaz `FileSystemComponent` con `getSize()` y `getName()`. Implementá `File` como hoja y `Folder` como composite que pueda contener otros componentes. Agregá métodos para calcular el tamaño total recursivamente y mostrar la estructura del árbol con indentación.",
+    "acceptanceCriteria": [
+      "Define la interfaz `FileSystemComponent` con `getSize()` y `getName()`.",
+      "Implementa `File` con nombre y tamaño fijo.",
+      "Implementa `Folder` que pueda contener otros `FileSystemComponent`.",
+      "Implementa `getSize()` recursivo que sume el tamaño de todos los hijos.",
+      "Implementa `print()` que muestre la estructura con indentación jerárquica."
+    ],
+    "starterCode": "// TODO: Define FileSystemComponent interface\n\n// TODO: Implement File class (leaf)\n\nclass File implements FileSystemComponent {\n  constructor(private name: string, private sizeKB: number) {}\n\n  getSize(): number {\n    // TODO: Return file size\n  }\n\n  getName(): string {\n    // TODO: Return file name\n  }\n\n  print(indent: string = ''): void {\n    // TODO: Print file with indent\n  }\n}\n\n// TODO: Implement Folder class (composite)\n\nclass Folder implements FileSystemComponent {\n  private children: FileSystemComponent[] = [];\n\n  constructor(private name: string) {}\n\n  add(component: FileSystemComponent): void {\n    // TODO: Add child\n  }\n\n  getSize(): number {\n    // TODO: Recursively sum children sizes\n  }\n\n  getName(): string {\n    // TODO: Return folder name\n  }\n\n  print(indent: string = ''): void {\n    // TODO: Print folder with children\n  }\n}\n\n// Demo:\nconst root = new Folder('proyecto');\nconst src = new Folder('src');\nsrc.add(new File('index.ts', 5));\nsrc.add(new File('app.ts', 12));\nroot.add(src);\nroot.add(new File('package.json', 2));\nroot.print();\n"
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "slug": "factory-method",
+  "title": "Factory Method",
+  "category": "CREACIONAL",
+  "categoryLabel": "Patrón Creacional",
+  "difficulty": "Medio",
+  "difficultyLevel": 2,
+  "description": "Define una interfaz para crear un objeto, pero deja que las subclases decidan qué clase instanciar. Permite a una clase diferir la instanciación a las subclases.",
+  "codeTag": "CREATIONAL_01",
+  "theory": {
+    "problem": "El Problema del Acoplamiento Condicional",
+    "problemDescription": "Imagina que estás construyendo una aplicación que necesita conectar a diferentes bases de datos: PostgreSQL, MySQL y SQLite. Al principio, creas una clase `DatabaseManager` con un método `connect()` que contiene un enorme `switch` o `if/else` según el tipo de base de datos. Cada vez que agregas una nueva DB, tienes que modificar esta clase, arriesgándote a romper funcionalidad existente. El código se vuelve rígido, frágil y difícil de mantener.",
+    "beforeAfter": {
+      "before": "Monolito Frágil",
+      "after": "Fábricas Modulares"
+    }
+  },
+  "analogy": {
+    "title": "La Analogía de la Fábrica",
+    "description": "Piensa en una fábrica de muebles. El cliente pide una silla, pero no le importa cómo se fabrica internamente. La fábrica (el Factory) decide si produce una silla de madera, metal o plástico, dependiendo de los recursos disponibles. El cliente solo recibe el producto final sin conocer los detalles de manufactura.",
+    "quote": "Tú eres el cliente que pide un objeto. La fábrica encapsula la lógica de creación y te devuelve lo que necesitas."
+  },
+  "realCases": [
+    {
+      "title": "Drivers de Base de Datos",
+      "description": "Los frameworks como Sequelize o Prisma usan Factory Method para crear conexiones a diferentes DBs sin exponer la lógica de conexión al resto de la aplicación. Cada DB tiene su propia fábrica que sabe cómo conectarse."
+    },
+    {
+      "title": "React.createElement",
+      "description": "React usa un patrón similar: `createElement` actúa como una fábrica que crea elementos virtuales sin que el desarrollador conozca los detalles internos del renderer. `ReactDOM.createRoot()` es otra fábrica que decide qué renderer usar."
+    },
+    {
+      "title": "Logging Multiplataforma",
+      "description": "Una aplicación que necesita loguear en consola en desarrollo, archivo en producción y servicios en la nube usa Factory Method para crear el logger adecuado según el entorno."
+    }
+  ],
+  "sections": {
+    "howItWorks": {
+      "title": "¿Cómo funciona Factory Method?",
+      "description": "El patrón Factory Method se compone de cuatro actores principales:\n\n1. **Producto**: Define la interfaz del objeto que la fábrica va a crear. Todas las implementaciones concretas deben cumplir este contrato.\n\n2. **Producto Concreto**: Son las implementaciones específicas del Producto. Por ejemplo, `PostgresConnection`, `MySQLConnection`.\n\n3. **Creador** (Factory): Declara el método fábrica que retorna objetos Producto. Puede tener lógica predeterminada.\n\n4. **Creadores Concretos**: Sobrescriben el método fábrica para crear productos concretos específicos.\n\nLa magia del patrón está en que el código cliente que USA el producto nunca necesita saber qué implementación concreta está usando. Solo conoce la interfaz.",
+      "structureCode": "// === ESTRUCTURA DEL PATRÓN FACTORY METHOD ===\n\n// 1. Interfaz Producto\ninterface Logger {\n  log(message: string): void;\n}\n\n// 2. Productos Concretos\nclass ConsoleLogger implements Logger {\n  log(message: string) {\n    console.log(`[DEV] ${message}`);\n  }\n}\n\nclass FileLogger implements Logger {\n  log(message: string) {\n    // Escribe a archivo\n    fs.appendFileSync('app.log', message);\n  }\n}\n\nclass CloudLogger implements Logger {\n  log(message: string) {\n    // Envía a servicio cloud\n    fetch('https://logs.api.com', { method: 'POST', body: message });\n  }\n}\n\n// 3. Creador (con Factory Method)\nabstract class LogManager {\n  // Este es el Factory Method\n  abstract createLogger(): Logger;\n\n  // El Creador también puede tener lógica que usa el producto\n  logError(message: string) {\n    const logger = this.createLogger();\n    logger.log(`ERROR: ${message}`);\n  }\n}\n\n// 4. Creadores Concretos\nclass DevLogManager extends LogManager {\n  createLogger(): Logger {\n    return new ConsoleLogger();\n  }\n}\n\nclass ProdLogManager extends LogManager {\n  createLogger(): Logger {\n    return new FileLogger();\n  }\n}\n\n// Uso:\nconst manager = getEnvironment() === 'production'\n  ? new ProdLogManager()\n  : new DevLogManager();\n\nmanager.logError('Algo salió mal');\n// Sin saber qué logger está usando!"
+    },
+    "prosCons": {
+      "pros": [
+        "Principio Abierto/Cerrado: agregás nuevos productos sin modificar el código cliente ni el Creador base.",
+        "Desacoplamiento total: el código cliente solo conoce la interfaz Producto, no las implementaciones.",
+        "Centralizás la lógica de creación: si la instanciación es compleja, está en un solo lugar.",
+        "Facilita testing: podés inyectar productos mock fácilmente.",
+        "Cumple con el principio de inversión de dependencias (DIP)."
+      ],
+      "cons": [
+        "Puede llevar a una jerarquía de clases paralela: cada Producto tiene su Creador.",
+        "A veces es más simple usar un parámetro en el constructor que una jerarquía de fábricas.",
+        "Si el número de variantes es pequeño y estable, la sobreingeniería no vale la pena.",
+        "Puede confundirse con Abstract Factory (que crea FAMILIAS de objetos, no uno solo)."
+      ]
+    },
+    "whenToUse": "Usá Factory Method cuando NO sabés de antemano qué implementación concreta de un objeto vas a necesitar. Es ideal para: frameworks que difieren la creación de objetos a las subclases, bibliotecas que necesitan trabajar con múltiples tipos de recursos (DBs, APIs, sistemas de archivos), o cuando la lógica de creación de un objeto es suficientemente compleja como para justificar su propia clase.",
+    "whenNotToUse": "NO uses Factory Method si la creación es trivial (solo un `new` y listo). Tampoco si el objeto que creás nunca va a tener variantes — es over-engineering. Si necesitás crear FAMILIAS de objetos relacionados, mirá Abstract Factory en lugar de Factory Method."
+  },
+  "codeBefore": "class DatabaseManager {\n  connect(type: string) {\n    if (type === 'postgres') {\n      // ... 50 líneas de config PostgreSQL\n      return new PostgresConnection();\n    } else if (type === 'mysql') {\n      // ... 40 líneas de config MySQL\n      return new MySQLConnection();\n    } else if (type === 'sqlite') {\n      // ... 30 líneas de config SQLite\n      return new SQLiteConnection();\n    }\n  }\n}",
+  "codeAfter": "// 1. Interfaz común\ninterface Database {\n  connect(): Connection;\n}\n\n// 2. Fábricas concretas aisladas\nclass PostgresFactory implements Database {\n  connect() { /* ... */ }\n}\n\n// 3. El cliente usa la interfaz\nclass Application {\n  private db: Database;\n  constructor(db: Database) {\n    this.db = db;\n  }\n  start() {\n    this.db.connect();\n  }\n}",
+  "exercise": {
+    "title": "Reto de Implementación",
+    "fileName": "Database_Factory.ts",
+    "statement": "Implementa un Factory Method para crear diferentes tipos de notificaciones (Email, SMS, Push) para una aplicación.",
+    "instructions": "Actualmente, la clase `NotificationService` usa condicionales para crear notificaciones. Refactorízalo para usar el patrón Factory Method.",
+    "acceptanceCriteria": [
+      "Crea una clase base `Notification` con un método `send()`.",
+      "Implementa `EmailNotification`, `SMSNotification` y `PushNotification`.",
+      "Crea un `NotificationFactory` que devuelva la implementación correcta.",
+      "Modifica `NotificationService` para usar la fábrica."
+    ],
+    "starterCode": "// TODO: Define Notification interface here\n\n// TODO: Implement concrete notification types\n\n// TODO: Create NotificationFactory\n\nclass NotificationService {\n  notify(type: string, message: string) {\n    // TODO: Refactor to use factory instead of if/else\n  }\n}",
+    "starterCodeJS": "// TODO: Define Notification interface here\n\n// TODO: Implement concrete notification types\n\n// TODO: Create NotificationFactory\n\nclass NotificationService {\n  notify(type, message) {\n    // TODO: Refactor to use factory instead of if/else\n  }\n}"
+  }
+}

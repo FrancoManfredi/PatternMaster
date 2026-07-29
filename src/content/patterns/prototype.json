@@ -1,0 +1,76 @@
+{
+  "slug": "prototype",
+  "title": "Prototype",
+  "category": "CREACIONAL",
+  "categoryLabel": "Patrón Creacional",
+  "difficulty": "Medio",
+  "difficultyLevel": 2,
+  "description": "Permite crear copias de objetos existentes sin acoplar el código a sus clases concretas. Clone duplica el estado completo del objeto original.",
+  "codeTag": "CREATIONAL_04",
+  "theory": {
+    "problem": "El Problema de la Duplicación de Objetos Complejos",
+    "problemDescription": "Imagina que tenés un objeto complejo con 20 propiedades, objetos anidados y arrays internos. Necesitás crear una copia para modificarla sin afectar el original. Si usás el operador spread `{ ...obj }`, solo copiás el nivel superficial (shallow copy) — los objetos anidados se comparten por referencia. Modificar la copia afecta al original y causas bugs imposibles de rastrear.",
+    "beforeAfter": {
+      "before": "Shallow Copy Buggeada",
+      "after": "Deep Copy Seguro"
+    }
+  },
+  "analogy": {
+    "title": "La Analogía de la Mitosis",
+    "description": "La mitosis celular es la copia perfecta: una célula se duplica y obtenés dos células idénticas con el mismo ADN. Si una célula sufre una mutación, la otra no se ve afectada porque son entidades independientes. Prototype es como la mitosis: clonás un objeto completo y obtenés una copia independiente que podés modificar sin miedo.",
+    "quote": "Clonar no es copiar la referencia — es crear una entidad independiente con el mismo estado."
+  },
+  "realCases": [
+    {
+      "title": "structuredClone en JavaScript",
+      "description": "El método `structuredClone()` de JS crea deep copies nativas. A diferencia del spread operator `{ ...obj }` que solo copia el primer nivel, `structuredClone()` copia recursivamente todos los niveles, incluyendo objetos anidados, fechas, Maps y Sets."
+    },
+    {
+      "title": "Game Engines — Spawn de Enemigos",
+      "description": "En Unity y Godot, los prefabs son prototipos: un enemigo base con sus componentes (sprite, colisiones, IA). Cuando spawneás 100 enemigos, clonás el prefab en lugar de crear cada uno desde cero. Cada clon tiene su propio estado (posición, vida) pero comparte la estructura base."
+    },
+    {
+      "title": "Document Templates",
+      "description": "Figma y Excalidraw te permiten duplicar shapes como prototipos: copiás un botón, un card o un layout completo y modificás la copia sin afectar el original. Cada duplicación es un clono independiente."
+    }
+  ],
+  "sections": {
+    "howItWorks": {
+      "title": "¿Cómo funciona Prototype?",
+      "description": "El patrón Prototype se compone de tres actores principales:\n\n1. **Interfaz Prototype**: Declara el método `clone()` que retorna una copia del objeto. Puede ser una interfaz o una clase abstracta.\n\n2. **Prototipos Concretos**: Implementan el método `clone()`. La implementación puede ser shallow (copiar solo propiedades primitivas) o deep (copiar recursivamente todo el árbol de objetos).\n\n3. **Cliente**: Usa `clone()` para crear copias sin conocer la clase concreta del objeto.\n\nLa clave está en que `clone()` retorna un NUEVO objeto con el Mismo estado, sin importar la complejidad del original. El cliente nunca llama a `new` — clona un existente.",
+      "structureCode": "// === ESTRUCTURA DEL PATRÓN PROTOTYPE ===\n\n// 1. Interfaz Prototype\ninterface Shape {\n  clone(): Shape;\n  getArea(): number;\n  describe(): string;\n}\n\n// 2. Prototipo Concreto — Circle\nclass Circle implements Shape {\n  constructor(\n    public radius: number,\n    public color: string,\n    public position: { x: number; y: number }\n  ) {}\n\n  // Deep copy manual\n  clone(): Circle {\n    return new Circle(\n      this.radius,\n      this.color,\n      { ...this.position } // copia el objeto anidado\n    );\n  }\n\n  getArea() { return Math.PI * this.radius ** 2; }\n  describe() {\n    return `Circle(r=${this.radius}, ${this.color}, pos=${this.position.x},${this.position.y})`;\n  }\n}\n\n// 3. Prototipo Concreto — Rectangle\nclass Rectangle implements Shape {\n  constructor(\n    public width: number,\n    public height: number,\n    public color: string,\n    public position: { x: number; y: number }\n  ) {}\n\n  clone(): Rectangle {\n    return new Rectangle(\n      this.width,\n      this.height,\n      this.color,\n      { ...this.position }\n    );\n  }\n\n  getArea() { return this.width * this.height; }\n  describe() {\n    return `Rect(${this.width}x${this.height}, ${this.color})`;\n  }\n}\n\n// 4. Uso — clonar sin acoplar a la clase\nconst original = new Circle(10, 'red', { x: 0, y: 0 });\nconst clone = original.clone();\n\nclone.position.x = 100; // Modifico la copia\nconsole.log(original.position.x); // 0 — el original no cambió\nconsole.log(clone.position.x);    // 100 — la copia sí"
+    },
+    "prosCons": {
+      "pros": [
+        "Independencia del cliente: clonás objetos sin conocer su clase concreta.",
+        "Evita llamadas costosas a `new`: si la creación del objeto es compleja (conexión a DB, carga de archivos), clonar es más barato.",
+        "Prototipos pueden tener estado mutable: cada clon tiene su propio estado independiente.",
+        "Funciona con objetos complejos: deep copy maneja objetos anidados, arrays y referencias circulares.",
+        "Patrón base para funcionalidades de copy/paste en IDEs, editores y games."
+      ],
+      "cons": [
+        "Deep copy no es trivial: clonar objetos con referencias circulares, functions o symbols requiere implementación cuidadosa.",
+        "structuredClone() no clona functions, Symbols ni WeakMaps — si tu objeto tiene estos, necesitás deep copy manual.",
+        "Cada clase necesita su propio método clone(): si olvidás copiar una propiedad, la copia comparte estado con el original.",
+        "Puede ser confuso: `structuredClone()` vs spread `{...}` vs clone() — cada uno tiene comportamiento diferente."
+      ]
+    },
+    "whenToUse": "Usá Prototype cuando necesitás crear copias independientes de objetos complejos sin acoplarte a sus clases concretas. Es ideal para: objetos caros de crear (conexiones, archivos, configuraciones), sistemas de undo/redo donde guardás snapshots, spawne de entidades en juegos, o cuando necesitás deep copy segura de objetos con estado anidado.",
+    "whenNotToUse": "NO uses Prototype si el objeto es simple y no tiene estado anidado — un spread `{ ...obj }` alcanza. Tampoco si los objetos son inmutables (no necesitás copiarlos). Si tu objeto tiene functions, Symbols o WeakMaps, `structuredClone()` no sirve y necesitás deep copy manual — evalúa si el overhead vale la pena."
+  },
+  "codeBefore": "const original = {\n  name: 'Config',\n  settings: { theme: 'dark', lang: 'es' },\n  tags: ['admin', 'dev']\n};\n\n// BUG: shallow copy — objetos anidados compartidos\nconst copy = { ...original };\ncopy.settings.theme = 'light';\nconsole.log(original.settings.theme); // 'light' — el original también cambió!",
+  "codeAfter": "// Opción 1: structuredClone (deep copy nativa)\nconst copy = structuredClone(original);\n\n// Opción 2: JSON parse/stringify (limitaciones con funciones)\nconst copy2 = JSON.parse(JSON.stringify(original));\n\n// Opción 3: Prototype pattern con clone()\ninterface Cloneable {\n  clone(): this;\n}\n\nclass Config implements Cloneable {\n  constructor(\n    public name: string,\n    public settings: { theme: string; lang: string },\n    public tags: string[]\n  ) {}\n\n  clone(): this {\n    return structuredClone(this);\n  }\n}\n\nconst config = new Config('App', { theme: 'dark', lang: 'es' }, ['admin']);\nconst copy = config.clone();\ncopy.settings.theme = 'light';\n// original.settings.theme sigue siendo 'dark'",
+  "exercise": {
+    "title": "Reto de Implementación",
+    "fileName": "Shape_Cloner.ts",
+    "statement": "Implementa el patrón Prototype para clonar shapes geométricas con posición, color y array de puntos (deep copy).",
+    "instructions": "Creá una interfaz `Shape` con `clone()` y `describe()`. Implementá `Circle` y `Rectangle` con posición (objeto anidado), color y un array de puntos de control. El clon debe ser deep copy: modificar el array de puntos del clon NO debe afectar al original.",
+    "acceptanceCriteria": [
+      "Define interfaz Shape con `clone(): Shape` y `describe(): string`.",
+      "Implementa Circle con position (objeto anidado), color y points (array).",
+      "Implementa Rectangle con las mismas propiedades.",
+      "Cada `clone()` retorna deep copy: modificar puntos/posición del clon NO afecta al original."
+    ],
+    "starterCode": "// TODO: Define Shape interface with clone() and describe()\n\n// TODO: Implement Circle with position, color, and points array\n//   clone() MUST deep copy — verify by mutating the clone\n\n// TODO: Implement Rectangle similarly\n\n// Verification:\nconst original = new Circle(5, 'red', { x: 0, y: 0 }, [\n  { x: 1, y: 1 }, { x: 2, y: 2 }\n]);\nconst clone = original.clone();\nclone.position.x = 100;\nclone.points[0].x = 999;\nconsole.log(original.position.x);   // Must be 0\nconsole.log(original.points[0].x);  // Must be 1\nconsole.log(clone.position.x);      // Must be 100\nconsole.log(clone.points[0].x);     // Must be 999"
+  }
+}

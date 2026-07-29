@@ -1,0 +1,76 @@
+{
+  "slug": "flyweight",
+  "title": "Flyweight",
+  "category": "ESTRUCTURAL",
+  "categoryLabel": "Patrón Estructural",
+  "difficulty": "Difícil",
+  "difficultyLevel": 3,
+  "description": "Usa compartición para soportar grandes cantidades de objetos de grano fino de forma eficiente. Flyweight minimiza el uso de memoria compartiendo datos entre objetos similares.",
+  "codeTag": "STRUCTURAL_06",
+  "theory": {
+    "problem": "El Problema del Consumo Masivo de Memoria",
+    "problemDescription": "Imagina que estás construyendo un editor de texto que maneja documentos de 100,000 caracteres. Cada carácter tiene propiedades intrínsecas (fuente, tamaño, color) y extrínsecas (posición x, y). Si cada carácter almacena TODAS sus propiedades, la memoria se dispara: 100,000 objetos con 5 propiedades cada uno = 500,000 datos. Pero la mayoría de los caracteres comparten las mismas propiedades de fuente y color. El patrón Flyweight sugiere separar las propiedades intrínsecas (compartidas) de las extrínsecas (individuales) para ahorrar memoria.",
+    "beforeAfter": {
+      "before": "Cada Carácter = Objeto Completo con Todas sus Propiedades",
+      "after": "Propiedades Compartidas en Fábrica + Posiciones Individuales"
+    }
+  },
+  "analogy": {
+    "title": "La Analogía de los Letreros de Neón",
+    "description": "Un letrero de neón tiene letras repetidas: una 'A' aparece 5 veces en 'ANÁLISIS'. En lugar de fabricar 5 letras 'A' diferentes, el fabricante tiene UN molde de 'A' y lo reutiliza. El molde es el Flyweight (compartido), y la posición de cada 'A' en el letrero es la información extrínseca (individual).",
+    "quote": "Un molde compartido, posiciones individuales — mucho ahorrar en memoria."
+  },
+  "realCases": [
+    {
+      "title": "Game Engines — Texturas y Shaders",
+      "description": "Los motores de juegos como Unity o Unreal comparten texturas y shaders entre miles de sprites. Cada sprite tiene su posición, escala y rotación (extrínseco), pero la textura es un Flyweight compartido en GPU."
+    },
+    {
+      "title": "Connection Pooling en Bases de Datos",
+      "description": "En lugar de crear una conexión nueva por cada query, los pools reutilizan conexiones existentes. La conexión es el Flyweight compartido, y el contexto de cada query (parámetros, timestamp) es la info extrínseca."
+    },
+    {
+      "title": "String Interning en JavaScript/Java",
+      "description": "JavaScript y Java internan strings: si dos variables tienen el mismo valor de string, apuntan al mismo objeto en memoria. El string es el Flyweight, y la referencia es la info extrínseca."
+    }
+  ],
+  "sections": {
+    "howItWorks": {
+      "title": "¿Cómo funciona Flyweight?",
+      "description": "El patrón Flyweight se compone de cuatro actores principales:\n\n1. **Flyweight (Interfaz)**: Define la interfaz que permite a los Flyweights recibir y operar con estado extrínseco (posiciones, contextos). Los métodos reciben la info extrínseca como parámetro.\n\n2. **Flyweight Concreto**: Almacena el estado intrínseco (compartido entre muchos objetos). Implementa la interfaz del Flyweight y opera con la info extrínseca recibida.\n\n3. **Fábrica de Flyweights**: Gestiona el pool de Flyweights. Cuando el cliente pide un Flyweight, la fábrica lo reutiliza si ya existe o lo crea si es nuevo. Asegura que los Flyweights se compartan correctamente.\n\n4. **Cliente**: Mantiene las referencias a los Flyweights y el estado extrínseco (posiciones, contextos). No crea Flyweights directamente — usa la Fábrica.\n\nLa clave está en la separación: el estado INTRÍNSECO (compartido) vive en el Flyweight, y el estado EXTRÍNSECO (individual) vive en el cliente o en una estructura externa.",
+      "structureCode": "// === ESTRUCTURA DEL PATRÓN FLYWEIGHT ===\n\n// 1. Flyweight (interfaz)\ninterface CharacterFlyweight {\n  render(x: number, y: number): void;\n}\n\n// 2. Flyweight Concreto (estado intrínseco compartido)\nclass ConcreteCharacter implements CharacterFlyweight {\n  constructor(\n    private char: string,\n    private font: string,\n    private size: number,\n    private color: string\n  ) {}\n\n  render(x: number, y: number) {\n    console.log(`Renderizar '${this.char}' en (${x},${y}) con ${this.font} ${this.size}px ${this.color}`);\n  }\n}\n\n// 3. Fábrica de Flyweights (pool de objetos compartidos)\nclass CharacterFactory {\n  private pool = new Map<string, CharacterFlyweight>();\n\n  getCharacter(char: string, font: string, size: number, color: string): CharacterFlyweight {\n    const key = `${char}-${font}-${size}-${color}`;\n\n    if (!this.pool.has(key)) {\n      this.pool.set(key, new ConcreteCharacter(char, font, size, color));\n      console.log(`Nuevo Flyweight creado: '${char}'`);\n    } else {\n      console.log(`Flyweight reutilizado: '${char}'`);\n    }\n\n    return this.pool.get(key)!;\n  }\n\n  getPoolSize(): number {\n    return this.pool.size;\n  }\n}\n\n// 4. Cliente (estado extrínseco individual)\nclass Document {\n  private characters: Array<{ flyweight: CharacterFlyweight; x: number; y: number }> = [];\n  private factory = new CharacterFactory();\n\n  addCharacter(char: string, x: number, y: number, font: string, size: number, color: string) {\n    const flyweight = this.factory.getCharacter(char, font, size, color);\n    this.characters.push({ flyweight, x, y });\n  }\n\n  render() {\n    this.characters.forEach(({ flyweight, x, y }) => {\n      flyweight.render(x, y);\n    });\n  }\n}\n\n// Uso:\nconst doc = new Document();\ndoc.addCharacter('H', 0, 0, 'Arial', 12, '#000');\ndoc.addCharacter('o', 10, 0, 'Arial', 12, '#000');\ndoc.addCharacter('l', 20, 0, 'Arial', 12, '#000');\ndoc.addCharacter('a', 30, 0, 'Arial', 12, '#000');\n// Solo 3 Flyweights se crearon (H, o, l, a = 4 únicos)\n// Pero se renderizaron 4 caracteres en posiciones diferentes"
+    },
+    "prosCons": {
+      "pros": [
+        "Ahorro masivo de memoria: objetos con estado intrínseco compartido reducen el consumo drásticamente.",
+        "Escalabilidad: podés manejar millones de objetos con poca memoria.",
+        "Separación clara: estado intrínseco (compartido) vs extrínseco (individual) es un diseño limpio.",
+        "Pool de objetos: la fábrica gestiona la reutilización automáticamente.",
+        "Rendimiento: menos objetos = menos garbage collection = mejor rendimiento."
+      ],
+      "cons": [
+        "Complejidad de diseño: separar estado intrínseco de extrínseco no siempre es trivial.",
+        "Overhead de la fábrica: la fábrica agrega una capa de complejidad y un lookup por cada acceso.",
+        "Difícil de debuggear: los objetos compartidos pueden causar efectos secundarios inesperados.",
+        "Solo beneficia cuando hay muchos objetos con estado compartido — si cada objeto es único, Flyweight no ayuda."
+      ]
+    },
+    "whenToUse": "Usá Flyweight cuando tengas una aplicación que maneja una gran cantidad de objetos similares con estado compartido. Es ideal para: editores de texto con miles de caracteres, juegos con miles de sprites, procesamiento de imágenes píxel a píxel, o cualquier caso donde la repetición de datos en memoria sea un problema.",
+    "whenNotToUse": "NO uses Flyweight si el número de objetos es pequeño — el overhead de la fábrica no justifica el ahorro. Tampoco si los objetos son intrínsecamente únicos (no hay estado que compartir). Si el estado intrínseco varía mucho entre objetos, el pool no será efectivo."
+  },
+  "codeBefore": "// Cada carácter almacena TODAS sus propiedades — masivo consumo de memoria\nclass Character {\n  constructor(\n    public char: string,\n    public x: number,\n    public y: number,\n    public font: string,\n    public size: number,\n    public color: string\n  ) {}\n}\n\n// 100,000 caracteres = 100,000 objetos con 6 propiedades cada uno\nconst doc: Character[] = [];\nfor (let i = 0; i < 100000; i++) {\n  doc.push(new Character('A', i * 10, 0, 'Arial', 12, '#000'));\n}\n// Memoria: 100,000 × 6 propiedades = 600,000 datos",
+  "codeAfter": "// Flyweight — estado intrínseco compartido, extrínseco individual\nconst factory = new CharacterFactory();\nconst doc: Array<{ flyweight: CharacterFlyweight; x: number; y: number }> = [];\n\n// 100,000 caracteres 'A' = SOLO 1 Flyweight reutilizado\nfor (let i = 0; i < 100000; i++) {\n  const fw = factory.getCharacter('A', 'Arial', 12, '#000');\n  doc.push({ flyweight: fw, x: i * 10, y: 0 });\n}\n// Memoria: 1 Flyweight (intrínseco) + 100,000 referencias (extrínseco)\nconsole.log(factory.getPoolSize()); // 1 — solo un Flyweight",
+  "exercise": {
+    "title": "Reto de Implementación",
+    "fileName": "EditorDeTexto.ts",
+    "statement": "Implementa un editor de texto que use Flyweight para optimizar la memoria al renderizar miles de caracteres.",
+    "instructions": "Creá una `CharacterFactory` que gestione un pool de Flyweights por (char, font, size, color). Cada Flyweight renderiza un carácter en una posición dada. El `Document` mantiene las posiciones (extrínseco) y la fábrica los Flyweights (intrínseco). Demostrá el ahorro de memoria comparando con un enfoque sin Flyweight.",
+    "acceptanceCriteria": [
+      "Define la interfaz `CharacterFlyweight` con `render(x, y)`.",
+      "Implementa `ConcreteCharacter` que almacene estado intrínseco (char, font, size, color).",
+      "Crea `CharacterFactory` con pool de Flyweights y método `getCharacter()`.",
+      "Implementa `Document` que mantenga posiciones extrínsecas y use la fáctoria."
+    ],
+    "starterCode": "// TODO: Define CharacterFlyweight interface\n\n// TODO: Implement ConcreteCharacter class (intrinsic state)\n\nclass ConcreteCharacter implements CharacterFlyweight {\n  constructor(\n    private char: string,\n    private font: string,\n    private size: number,\n    private color: string\n  ) {}\n\n  render(x: number, y: number) {\n    // TODO: Render character at position\n  }\n}\n\n// TODO: Implement CharacterFactory with pool\n\nclass CharacterFactory {\n  private pool = new Map<string, CharacterFlyweight>();\n\n  getCharacter(char: string, font: string, size: number, color: string): CharacterFlyweight {\n    // TODO: Return existing or create new Flyweight\n  }\n}\n\n// TODO: Implement Document class\n\nclass Document {\n  private characters: Array<{ flyweight: CharacterFlyweight; x: number; y: number }> = [];\n  private factory = new CharacterFactory();\n\n  addCharacter(char: string, x: number, y: number, font: string, size: number, color: string) {\n    // TODO: Use factory to get Flyweight and store position\n  }\n\n  render() {\n    // TODO: Render all characters\n  }\n}\n\n// Demo:\nconst doc = new Document();\nfor (let i = 0; i < 1000; i++) {\n  doc.addCharacter('A', i * 10, 0, 'Arial', 12, '#000');\n}\ndoc.render();\n"
+  }
+}

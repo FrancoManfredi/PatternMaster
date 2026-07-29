@@ -1,0 +1,77 @@
+{
+  "slug": "template-method",
+  "title": "Template Method",
+  "category": "COMPORTAMIENTO",
+  "categoryLabel": "Patrón de Comportamiento",
+  "difficulty": "Fácil",
+  "difficultyLevel": 1,
+  "description": "Define el esqueleto de un algoritmo en un método base, difiriendo la implementación de algunos pasos a las subclases. Permite redefinir ciertos pasos de un algoritmo sin cambiar su estructura general.",
+  "codeTag": "BEHAVIORAL_11",
+  "theory": {
+    "problem": "El Problema del Código Duplicado en Algoritmos Similares",
+    "problemDescription": "Imagina que tenés múltiples clases que realizan algoritmos similares con ligeras variaciones. Por ejemplo, un generador de reportes PDF, HTML y CSV. Todos siguen los mismos pasos: obtener datos, formatear, generar y enviar. Pero la implementación de cada paso varía según el formato. Sin el patrón Template Method, duplicarías la estructura del algoritmo en cada clase, violando el DRY. El patrón sugiere mover el algoritmo a una clase base y dejar que las subclases redefinan los pasos que varían.",
+    "beforeAfter": {
+      "before": "Código Duplicado",
+      "after": "Esqueleto Compartido"
+    }
+  },
+  "analogy": {
+    "title": "La Analogía del Plano de Construcción",
+    "description": "Tenés un plano para construir una casa: primero cimientos, luego paredes, techo y acabados. El orden es FIJO y siempre el mismo. Pero los materiales varían: cimientos de hormigón o madera, paredes de ladrillo o block, techo de teja o metal. El plano es el Template Method: define el esqueleto del proceso, pero cada subclase (casa de ladrillo, casa de block) implementa los materiales específicos de cada paso.",
+    "quote": "El orden del algoritmo es inmutable, pero los materiales de cada paso son intercambiables."
+  },
+  "realCases": [
+    {
+      "title": "Pipelines ETL (Extract, Transform, Load)",
+      "description": "Los procesos ETL siguen siempre los mismos pasos: extraer datos de una fuente, transformarlos según reglas de negocio, y cargarlos en un destino. Cada fuente de datos (API, CSV, base de datos) tiene una implementación distinta de cada paso, pero la estructura del pipeline es idéntica."
+    },
+    {
+      "title": "Pipelines CI/CD",
+      "description": "Los flujos de integración continua siguen un patrón: checkout → install → test → build → deploy. Cada paso puede tener variaciones según el lenguaje o framework, pero la secuencia general se mantiene. La infraestructura define el esqueleto; los proyectos definen los detalles."
+    },
+    {
+      "title": "Setup y Teardown en Tests",
+      "description": "Los frameworks de testing (Jest, JUnit, pytest) usan Template Method: `setUp()` → `test()` → `tearDown()`. La clase base define el orden de ejecución; las subclases redefinen el setup y teardown específicos de cada suite de tests."
+    }
+  ],
+  "sections": {
+    "howItWorks": {
+      "title": "¿Cómo funciona Template Method?",
+      "description": "El patrón Template Method se compone de dos actores principales:\n\n1. **Clase Abstracta con Template Method**: Es la clase base que define el algoritmo esqueleto. Contiene el método template (marcado como `final` o no sobreescrible) que define el orden de los pasos, y métodos abstractos o primitivos que las subclases deben implementar.\n\n2. **Subclases Concretas**: Son las implementaciones específicas que redefinen los pasos del algoritmo. Cada subclase implementa los métodos abstractos con su variante específica.\n\nLa clave está en que la clase base controla el flujo del algoritmo. Las subclases no pueden alterar el orden de los pasos, solo la implementación de cada paso. Esto garantiza consistencia mientras permite variación.",
+      "structureCode": "// === ESTRUCTURA DEL PATRÓN TEMPLATE METHOD ===\n\n// 1. Clase Abstracta con Template Method\nabstract class DataExporter {\n  // Template Method: define el esqueleto del algoritmo\n  export(filePath: string) {\n    const data = this.extractData(filePath);\n    const formatted = this.formatData(data);\n    const output = this.generateOutput(formatted);\n    this.send(output);\n  }\n\n  // Métodos abstractos: las subclases DEBEN implementarlos\n  protected abstract extractData(path: string): RawData[];\n  protected abstract formatData(data: RawData[]): FormattedData;\n  protected abstract generateOutput(data: FormattedData): string;\n\n  // Método con implementación por defecto (opcional override)\n  protected send(output: string) {\n    console.log(`Enviando: ${output.substring(0, 50)}...`);\n  }\n}\n\n// 2. Subclases Concretas\nclass CSVExporter extends DataExporter {\n  protected extractData(path: string): RawData[] {\n    return readCSV(path);\n  }\n\n  protected formatData(data: RawData[]): FormattedData {\n    return data.map(row => row.join(','));\n  }\n\n  protected generateOutput(data: FormattedData): string {\n    return data.join('\\n');\n  }\n}\n\nclass JSONExporter extends DataExporter {\n  protected extractData(path: string): RawData[] {\n    return readJSON(path);\n  }\n\n  protected formatData(data: RawData[]): FormattedData {\n    return JSON.stringify(data);\n  }\n\n  protected generateOutput(data: FormattedData): string {\n    return data;\n  }\n}\n\n// Uso:\nconst csvExporter = new CSVExporter();\ncsvExporter.export('data.json'); // Ejecuta: extract → format → generate → send\n\nconst jsonExporter = new JSONExporter();\njsonExporter.export('data.csv'); // Misma secuencia, diferente implementación"
+    },
+    "prosCons": {
+      "pros": [
+        "Elimina código duplicado: la estructura del algoritmo vive en UN solo lugar.",
+        "Control del flujo: la clase base garantiza que el algoritmo se ejecute en el orden correcto.",
+        "Principio Abierto/Cerrado (OCP): podés agregar nuevas variantes sin modificar la clase base.",
+        "Hooke extensibles: los métodos primitivos permiten personalizar pasos sin romper el esqueleto.",
+        "Fácil de entender: el patrón es simple y el flujo del algoritmo es evidente."
+      ],
+      "cons": [
+        "Herencia limitada: un lenguaje solo permite una clase base, lo que puede ser restrictivo.",
+        "Violación de Liskov: si las subclases no implementan correctamente los métodos abstractos, el algoritmo puede fallar.",
+        "Acoplamiento fuerte: las subclases dependen de la implementación de la clase base.",
+        "Puede volverse rígido: si el esqueleto del algoritmo cambia, todas las subclases se ven afectadas."
+      ]
+    },
+    "whenToUse": "Usá Template Method cuando tengas múltiples clases que implementan algoritmos similares con variaciones en pasos específicos. Es ideal para: pipelines ETL, generación de reportes en múltiples formatos, procesos de testing con setup/teardown, flujos CI/CD, y cualquier caso donde tengas código duplicado en la estructura de un algoritmo.",
+    "whenNotToUse": "NO uses Template Method si las variaciones del algoritmo son tan grandes que el esqueleto no es realmente compartido. Tampoco si necesitás componer comportamientos en tiempo de ejecución (usá Strategy en su lugar). Si las subclases necesitan libertad total sobre el orden de los pasos, Template Method es demasiado restrictivo."
+  },
+  "codeBefore": "class PDFReportGenerator {\n  generateReport(data: Data[]) {\n    const formatted = data.map(d => `${d.name}: ${d.value}`);\n    const html = `<html><body>${formatted.join('<br>')}</body></html>`;\n    const pdf = htmlToPDF(html);\n    fs.writeFileSync('report.pdf', pdf);\n  }\n}\n\nclass HTMLReportGenerator {\n  generateReport(data: Data[]) {\n    const formatted = data.map(d => `<tr><td>${d.name}</td><td>${d.value}</td></tr>`);\n    const html = `<table>${formatted.join('')}</table>`;\n    fs.writeFileSync('report.html', html);\n  }\n}\n\nclass CSVReportGenerator {\n  generateReport(data: Data[]) {\n    const header = 'name,value';\n    const rows = data.map(d => `${d.name},${d.value}`);\n    const csv = [header, ...rows].join('\\n');\n    fs.writeFileSync('report.csv', csv);\n  }\n}",
+  "codeAfter": "// 1. Clase base con template method\nabstract class ReportGenerator {\n  generateReport(data: Data[]) {\n    const formatted = this.formatData(data);\n    const output = this.generateOutput(formatted);\n    this.save(output);\n  }\n\n  protected abstract formatData(data: Data[]): string[];\n  protected abstract generateOutput(lines: string[]): string;\n\n  protected save(output: string) {\n    fs.writeFileSync(`report.${this.getExtension()}`, output);\n  }\n\n  protected abstract getExtension(): string;\n}\n\n// 2. Subclases con implementación específica\nclass PDFReportGenerator extends ReportGenerator {\n  protected formatData(data: Data[]) {\n    return data.map(d => `${d.name}: ${d.value}`);\n  }\n  protected generateOutput(lines: string[]) {\n    return htmlToPDF(`<html><body>${lines.join('<br>')}</body></html>`);\n  }\n  protected getExtension() { return 'pdf'; }\n}\n\nclass CSVReportGenerator extends ReportGenerator {\n  protected formatData(data: Data[]) {\n    return data.map(d => `${d.name},${d.value}`);\n  }\n  protected generateOutput(lines: string[]) {\n    return ['name,value', ...lines].join('\\n');\n  }\n  protected getExtension() { return 'csv'; }\n}",
+  "exercise": {
+    "title": "Reto de Implementación",
+    "fileName": "GeneradorDeReportes.ts",
+    "statement": "Implementa un generador de reportes que soporte múltiples formatos (PDF, HTML, CSV) usando el patrón Template Method.",
+    "instructions": "Crea una clase abstracta `ReportGenerator` con un template method `generate()` que defina la secuencia: obtener datos → procesar datos → formatear → exportar. Cada subclase (PDF, HTML, CSV) implementa sus propias versiones de procesamiento y formato. El template method define el flujo, las subclases definen los detalles.",
+    "acceptanceCriteria": [
+      "Define la clase base `ReportGenerator` con un template method `generate()` que defina el orden del algoritmo.",
+      "Los métodos de pasos están definidos en la clase base y pueden ser sobrescritos por las subclases.",
+      "Implementa `PDFReport` que extiende `ReportGenerator` con formato PDF.",
+      "Implementa `HTMLReport` y `CSVReport` que extienden `ReportGenerator` con sus variantes.",
+      "El template method mantiene el orden fijo: los pasos siempre se ejecutan en la misma secuencia."
+    ],
+    "starterCode": "// TODO: Create abstract ReportGenerator with template method\n\n// TODO: Implement PDFReport, HTMLReport, CSVReport subclasses\n\n// The template method should enforce this order:\n// 1. getData() - fetch raw data\n// 2. processData(data) - transform data (override per format)\n// 3. formatOutput(processed) - format to string (override per format)\n// 4. export(formatted) - save to file\n\nconst pdfReport = new PDFReport();\npdfReport.generate(); // Executes template: getData → processData → formatOutput → export"
+  }
+}

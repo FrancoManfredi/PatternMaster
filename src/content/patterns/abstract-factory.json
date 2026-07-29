@@ -1,0 +1,76 @@
+{
+  "slug": "abstract-factory",
+  "title": "Abstract Factory",
+  "category": "CREACIONAL",
+  "categoryLabel": "Patrón Creacional",
+  "difficulty": "Medio",
+  "difficultyLevel": 2,
+  "description": "Proporciona una interfaz para crear familias de objetos relacionados sin especificar sus clases concretas. Cada fábrica concreta genera una familia completa de productos compatibles.",
+  "codeTag": "CREATIONAL_02",
+  "theory": {
+    "problem": "El Problema de las Familias de Objetos Relacionados",
+    "problemDescription": "Imagina que estás construyendo una aplicación que necesita crear interfaz de usuario para diferentes sistemas operativos: Windows, macOS y Linux. Cada SO tiene su propia familia de widgets (botones, checkboxes, menús) que deben ser compatibles entre sí. Usar un botón de Windows con un checkbox de macOS genera inconsistencias visuales y comportamientos erróneos. El código termina lleno de condicionales que mezclan estilos de diferentes familias.",
+    "beforeAfter": {
+      "before": "Familias Mezcladas",
+      "after": "Fábricas de Familias"
+    }
+  },
+  "analogy": {
+    "title": "La Analogía de IKEA",
+    "description": "Cuando vas a IKEA y elegís una línea de muebles como NORDCarta o HEMNES, todos los muebles de esa línea combinan entre sí: colores, materiales, estilos. No podés mezclar una silla nórdica con una mesa art decó y esperar que se vea bien. Abstract Factory es como elegir la línea completa: la fábrica te devuelve la familia entera y garantiza compatibilidad.",
+    "quote": "No elegís piezas sueltas, elegís la familia completa. La fábrica se encarga de que todo combine."
+  },
+  "realCases": [
+    {
+      "title": "UI Toolkits Cross-Platform",
+      "description": "Librerías como Material Design o Ant Design actúan como Abstract Factories: cada tema (light/dark) es una familia completa de componentes (botones, inputs, cards) que garantizan consistencia visual. No podés mezclar componentes de diferentes temas sin romper la UI."
+    },
+    {
+      "title": "Familias de Drivers de Base de Datos",
+      "description": "Cuando usás un ORM, cada DB (PostgreSQL, MongoDB) tiene su propia familia de objetos: Connection, Transaction, QueryBuilder. No podés usar un QueryBuilder de PostgreSQL con una Connection de MongoDB. La Abstract Factory garantiza que todos los componentes de la familia sean compatibles."
+    },
+    {
+      "title": "Game Asset Factories",
+      "description": "Los motores de videojuegos usan Abstract Factory para generar familias de assets temáticos: un juego de fantasía tiene su familia (espadas, escudos, armaduras medievales) y un juego de ciencia ficción tiene la suya (láseres, escudos energéticos, trajes espaciales). Cada tema es una fábrica completa."
+    }
+  ],
+  "sections": {
+    "howItWorks": {
+      "title": "¿Cómo funciona Abstract Factory?",
+      "description": "El patrón Abstract Factory se compone de cuatro actores principales:\n\n1. **Interfaz Abstract Factory**: Declara métodos de creación para cada tipo de producto de la familia. Por ejemplo, `createButton()`, `createCheckbox()`, `createMenu()`.\n\n2. **Fábricas Concretas**: Implementan la interfaz de fábrica para producir una familia específica de productos. Cada fábrica concreta genera productos que son compatibles entre sí.\n\n3. **Interfaces Abstractas de Producto**: Definen contratos para cada tipo de producto (Button, Checkbox, etc.) que todas las implementaciones deben cumplir.\n\n4. **Productos Concretos**: Son las implementaciones específicas de cada producto dentro de una familia. Un `WinButton` solo se usa con `WinCheckbox`.\n\nLa clave está en que el código cliente solo conoce las interfaces abstractas. Nunca sabe qué fábrica concreta está usando, lo que permite cambiar toda la familia de productos sin modificar una línea de código cliente.",
+      "structureCode": "// === ESTRUCTURA DEL PATRÓN ABSTRACT FACTORY ===\n\n// 1. Interfaces de Producto\ninterface Button {\n  render(): void;\n  onClick(handler: () => void): void;\n}\n\ninterface Checkbox {\n  render(): void;\n  toggle(): void;\n}\n\n// 2. Productos Concretos — Windows\nclass WinButton implements Button {\n  render() { console.log('Botón Windows'); }\n  onClick(handler: () => void) { /* Win event */ }\n}\n\nclass WinCheckbox implements Checkbox {\n  render() { console.log('Checkbox Windows'); }\n  toggle() { /* Win toggle */ }\n}\n\n// 3. Productos Concretos — Mac\nclass MacButton implements Button {\n  render() { console.log('Botón macOS'); }\n  onClick(handler: () => void) { /* Mac event */ }\n}\n\nclass MacCheckbox implements Checkbox {\n  render() { console.log('Checkbox macOS'); }\n  toggle() { /* Mac toggle */ }\n}\n\n// 4. Interfaz Abstract Factory\ninterface GUIFactory {\n  createButton(): Button;\n  createCheckbox(): Checkbox;\n}\n\n// 5. Fábricas Concretas\nclass WinFactory implements GUIFactory {\n  createButton(): Button { return new WinButton(); }\n  createCheckbox(): Checkbox { return new WinCheckbox(); }\n}\n\nclass MacFactory implements GUIFactory {\n  createButton(): Button { return new MacButton(); }\n  createCheckbox(): Checkbox { return new MacCheckbox(); }\n}\n\n// 6. Cliente — solo conoce interfaces\nfunction buildUI(factory: GUIFactory) {\n  const button = factory.createButton();\n  const checkbox = factory.createCheckbox();\n  button.render();\n  checkbox.render();\n}\n\n// Uso:\nconst os = detectOS();\nconst factory = os === 'win' ? new WinFactory() : new MacFactory();\nbuildUI(factory);"
+    },
+    "prosCons": {
+      "pros": [
+        "Garantiza compatibilidad entre productos de la misma familia: no podés mezclar un botón de Windows con un checkbox de Mac.",
+        "Principio Abierto/Cerrado: agregás nuevas familias (Linux, Mobile) sin modificar el código cliente.",
+        "Desacoplamiento total: el cliente solo conoce interfaces abstractas, nunca clases concretas.",
+        "Facilita testing: inyectás fábricas mock que devuelven implementaciones de prueba.",
+        "Centraliza la creación: si la instanciación de productos es compleja, está encapsulada en la fábrica."
+      ],
+      "cons": [
+        "Agregar un nuevo tipo de producto (ej: `createSlider()`) requiere modificar TODAS las fábricas existentes.",
+        "Puede llevar a una jerarquía de clases profunda: cada familia tiene múltiples productos.",
+        "Si solo tenés una familia de productos, es over-engineering — un simple Factory Method alcanza.",
+        "La abstracción puede ser confusa para developers juniors que no ven la necesidad de tantas interfaces."
+      ]
+    },
+    "whenToUse": "Usá Abstract Factory cuando necesitás crear familias de objetos relacionados que deben ser compatibles entre sí. Es ideal para: UI toolkits que deben soportar múltiples temas o plataformas, sistemas que trabajan con familias de productos de DB (connection + transaction + query builder), juegos con múltiples temáticas, o cualquier sistema donde la compatibilidad entre componentes es crítica.",
+    "whenNotToUse": "NO uses Abstract Factory si solo tenés un tipo de producto (no una familia). Tampoco si las familias de objetos no tienen restricciones de compatibilidad — en ese caso, un simple Factory Method es suficiente. Si las familias cambian muy frecuentemente, el costo de mantener múltiples fábricas puede superar el beneficio."
+  },
+  "codeBefore": "function createUI(theme: string) {\n  if (theme === 'windows') {\n    const button = new WinButton();\n    const checkbox = new WinCheckbox();\n    return { button, checkbox };\n  } else if (theme === 'mac') {\n    const button = new MacButton();\n    const checkbox = new MacCheckbox();\n    return { button, checkbox };\n  } else if (theme === 'linux') {\n    const button = new LinuxButton();\n    const checkbox = new LinuxCheckbox();\n    return { button, checkbox };\n  }\n  // Cada nuevo widget implica modificar TODOS los bloques\n}",
+  "codeAfter": "// 1. Interfaces abstractas\ninterface GUIFactory {\n  createButton(): Button;\n  createCheckbox(): Checkbox;\n}\n\n// 2. Fábricas concretas — cada una produce una familia completa\nclass WinFactory implements GUIFactory {\n  createButton() { return new WinButton(); }\n  createCheckbox() { return new WinCheckbox(); }\n}\n\nclass MacFactory implements GUIFactory {\n  createButton() { return new MacButton(); }\n  createCheckbox() { return new MacCheckbox(); }\n}\n\n// 3. El cliente solo usa la interfaz\nfunction buildUI(factory: GUIFactory) {\n  const button = factory.createButton();\n  const checkbox = factory.createCheckbox();\n  button.render();\n  checkbox.render();\n}",
+  "exercise": {
+    "title": "Reto de Implementación",
+    "fileName": "Furniture_Factory.ts",
+    "statement": "Implementa una Abstract Factory para crear familias de muebles (Victorian, Modern, ArtDeco) donde cada familia tiene silla, mesa y sofá compatibles.",
+    "instructions": "Creá una fábrica abstracta `FurnitureFactory` con métodos para crear silla, mesa y sofá. Implementá tres fábricas concretas: Victorian (ornamental, madera oscura), Modern (minimalista, líneas limpias) y ArtDeco (geométrico, dorado). El cliente debe poder crear un mueble completo sin saber qué estilo está usando.",
+    "acceptanceCriteria": [
+      "Crea interfaces `Chair`, `Table` y `Sofa` con métodos `render()` y `getStyle()`.",
+      "Implementa las 3 familias concretas (Victorian, Modern, ArtDeco) — 9 clases totales.",
+      "Crea la interfaz `FurnitureFactory` con 3 métodos de creación.",
+      "Implementa las 3 fábricas concretas y demuestra uso con un cliente genérico."
+    ],
+    "starterCode": "// TODO: Define interfaces Chair, Table, Sofa\n\n// TODO: Create Victorian family (VictorianChair, VictorianTable, VictorianSofa)\n\n// TODO: Create Modern family\n\n// TODO: Create ArtDeco family\n\n// TODO: Define FurnitureFactory interface\n\n// TODO: Implement VictorianFactory, ModernFactory, ArtDecoFactory\n\n// Demo:\nfunction furnishRoom(factory: FurnitureFactory) {\n  const chair = factory.createChair();\n  const table = factory.createTable();\n  const sofa = factory.createSofa();\n  console.log(chair.getStyle(), table.getStyle(), sofa.getStyle());\n}"
+  }
+}

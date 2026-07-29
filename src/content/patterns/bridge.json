@@ -1,0 +1,76 @@
+{
+  "slug": "bridge",
+  "title": "Bridge",
+  "category": "ESTRUCTURAL",
+  "categoryLabel": "Patrón Estructural",
+  "difficulty": "Intermedio",
+  "difficultyLevel": 2,
+  "description": "Desacopla una abstracción de su implementación, permitiendo que ambas varíen independientemente. Bridge separa la jerarquía de control de la jerarquía de implementación.",
+  "codeTag": "STRUCTURAL_02",
+  "theory": {
+    "problem": "El Problema de la Explosión Combinatoria",
+    "problemDescription": "Imagina que estás construyendo controles remotos para dispositivos electrónicos. Tenés TV, Radio y Parlante como dispositivos, y cada uno puede tener un control básico o avanzado. Con el enfoque tradicional, terminás creando TVBasicRemote, TVAdvancedRemote, RadioBasicRemote, RadioAdvancedRemote... Cada nueva dimensión (un dispositivo más o un tipo de remoto más) multiplica el número de clases. El patrón Bridge sugiere separar la abstracción (el control remoto) de la implementación (el dispositivo) en dos jerarquías independientes.",
+    "beforeAfter": {
+      "before": "Explosión Combinatoria de Clases",
+      "after": "Dos Jerarquías Independientes"
+    }
+  },
+  "analogy": {
+    "title": "La Analogía del Puente",
+    "description": "Un puente conecta dos orillas de un río sin que una dependa de la otra. Si mañana cambiás la forma de la orilla izquierda, la orilla derecha no se entera. En Bridge, la abstracción (un lado del río) y la implementación (el otro lado) están conectadas pero son independientes.",
+    "quote": "Conectá dos mundos sin que uno dependa del otro."
+  },
+  "realCases": [
+    {
+      "title": "APIs de gráficos multiplataforma",
+      "description": "Un motor de juegos define la abstracción (renderizar una escena, un sprite, una textura) y las implementaciones son DirectX, OpenGL y Vulkan. El motor no cambia cuando agregás una nueva API gráfica."
+    },
+    {
+      "title": "Frameworks UI multiplataforma",
+      "description": "React Native define componentes UI (abstracción) y la implementación varía entre iOS (UIKit) y Android (View). El mismo código de componente se renderiza en distintas plataformas."
+    },
+    {
+      "title": "Drivers de bases de datos",
+      "description": "Un ORM define la abstracción (conexión, query, transacción) y los drivers son las implementaciones concretas para MySQL, PostgreSQL, SQLite. El ORM no cambia al agregar un nuevo driver."
+    }
+  ],
+  "sections": {
+    "howItWorks": {
+      "title": "¿Cómo funciona Bridge?",
+      "description": "El patrón Bridge se compone de cuatro actores principales:\n\n1. **Abstracción**: Define la interfaz de alto nivel del control remoto. Mantiene una referencia a un objeto Implementación (el dispositivo). Puede delegar operaciones al Implementador.\n\n2. **Abstracción Refinada**: Extiende la Abstracción con funcionalidad adicional (control avanzado con volumen, búsqueda, etc.).\n\n3. **Implementación (Interfaz)**: Define la interfaz de bajo nivel que los dispositivos deben cumplir: `turnOn()`, `turnOff()`, `setChannel()`, etc.\n\n4. **Implementaciones Concretas**: Son las implementaciones específicas de cada dispositivo: TV, Radio, Parlante. Cada una ejecuta la operación de forma distinta.\n\nLa clave está en que la jerarquía de Abstracción (controles remotos) y la jerarquía de Implementación (dispositivos) son completamente independientes. Podés mezclar cualquier control con cualquier dispositivo.",
+      "structureCode": "// === ESTRUCTURA DEL PATRÓN BRIDGE ===\n\n// 1. Implementación (el dispositivo)\ninterface Device {\n  turnOn(): void;\n  turnOff(): void;\n  setChannel(channel: number): void;\n  getStatus(): string;\n}\n\n// Implementaciones Concretas\nclass TV implements Device {\n  private on = false;\n  private channel = 1;\n  turnOn() { this.on = true; console.log('TV encendida'); }\n  turnOff() { this.on = false; console.log('TV apagada'); }\n  setChannel(ch: number) { this.channel = ch; }\n  getStatus() { return `TV ${this.on ? 'ON' : 'OFF'} - Canal ${this.channel}`; }\n}\n\nclass Radio implements Device {\n  private on = false;\n  private frequency = 88.5;\n  turnOn() { this.on = true; console.log('Radio encendida'); }\n  turnOff() { this.on = false; console.log('Radio apagada'); }\n  setFrequency(freq: number) { this.frequency = freq; }\n  getStatus() { return `Radio ${this.on ? 'ON' : 'OFF'} - ${this.frequency}MHz`; }\n}\n\n// 2. Abstracción (el control remoto)\nabstract class RemoteControl {\n  constructor(protected device: Device) {}\n\n  abstract togglePower(): void;\n  abstract nextChannel(): void;\n}\n\n// 3. Abstracción Refinada\nclass AdvancedRemote extends RemoteControl {\n  private channel = 1;\n\n  togglePower() {\n    // Lógica de encendido/apagado con lógica adicional\n  }\n\n  nextChannel() {\n    this.channel++;\n    this.device.setChannel(this.channel);\n  }\n\n  setChannel(ch: number) {\n    this.channel = ch;\n    this.device.setChannel(ch);\n  }\n}\n\n// Uso:\nconst tv = new TV();\nconst remote = new AdvancedRemote(tv);\nremote.togglePower();\nremote.nextChannel();"
+    },
+    "prosCons": {
+      "pros": [
+        "Principio Abierto/Cerrado (OCP): podés agregar nuevas abstracciones o implementaciones sin modificar el código existente.",
+        "Elimina la explosión combinatoria: en lugar de M × N clases, tenés M + N.",
+        "Desacoplamiento fuerte: la abstracción y la implementación pueden variar independientemente.",
+        "Reimplementación: podés cambiar la implementación en tiempo de ejecución.",
+        "Segmentación de implementación: podés ocultar detalles de implementación al cliente."
+      ],
+      "cons": [
+        "Complejidad inicial: crear dos jerarquías puede parecer over-engineering al principio.",
+        "Difícil de aplicar si las dimensiones no son genuinamente independientes.",
+        "Aumenta el código total si solo tenés 2-3 combinaciones posibles.",
+        "La separación puede hacer que el código sea menos intuitivo para desarrolladores nuevos."
+      ]
+    },
+    "whenToUse": "Usá Bridge cuando tengas dos o más dimensiones de variación que deben cambiar independientemente. Es ideal para: controles remotos / dispositivos, APIs multiplataforma (rendering, networking), clases que pueden tener múltiples implementaciones y múltiples variantes de comportamiento, o cuando querés compartir implementación entre objetos que están en diferentes niveles de abstracción.",
+    "whenNotToUse": "NO uses Bridge si solo tenés una dimensión de variación — usa Strategy o Template Method. Tampoco si las combinaciones son muy pocas (2-3) y no esperás que crezcan. Si la separación de abstracción/implementación no es natural en tu dominio, Bridge agrega complejidad sin beneficio."
+  },
+  "codeBefore": "// Explosión de clases — cada combinación es una clase nueva\nclass TVBasicRemote {\n  private tv = new TV();\n  turnOn() { this.tv.turnOn(); }\n  nextChannel() { /* ... */ }\n}\n\nclass TVAdvancedRemote {\n  private tv = new TV();\n  turnOn() { this.tv.turnOn(); }\n  nextChannel() { /* ... */ }\n  setVolume() { /* ... */ }\n}\n\nclass RadioBasicRemote {\n  private radio = new Radio();\n  turnOn() { this.radio.turnOn(); }\n  nextFrequency() { /* ... */ }\n}\n\nclass RadioAdvancedRemote {\n  private radio = new Radio();\n  turnOn() { this.radio.turnOn(); }\n  nextFrequency() { /* ... */ }\n  setVolume() { /* ... */ }\n}\n// Cada dispositivo nuevo × cada remote nuevo = nueva clase",
+  "codeAfter": "// Dos jerarquías independientes — M + N en lugar de M × N\ninterface Device {\n  turnOn(): void;\n  turnOff(): void;\n  setChannel(ch: number): void;\n}\n\nabstract class RemoteControl {\n  constructor(protected device: Device) {}\n  abstract togglePower(): void;\n  abstract nextChannel(): void;\n}\n\nclass TVRemote extends RemoteControl {\n  togglePower() { /* ... */ }\n  nextChannel() { /* ... */ }\n}\n\n// Mezclar cualquier remote con cualquier device\nconst tvRemote = new TVRemote(new TV());\ntvRemote.togglePower();",
+  "exercise": {
+    "title": "Reto de Implementación",
+    "fileName": "ControlRemoto.ts",
+    "statement": "Implementa un sistema de controles remotos usando el patrón Bridge para desacoplar la abstracción del control de la implementación del dispositivo.",
+    "instructions": "Tenés tres dispositivos (TV, Radio, Parlante) y dos tipos de control (básico y avanzado). Creá una interfaz `Device`, implementaciones concretas para cada dispositivo, y una jerarquía de `RemoteControl` que delegue al dispositivo. El resultado: 3 dispositivos × 2 controles = 5 clases en lugar de 6.",
+    "acceptanceCriteria": [
+      "Define la interfaz `Device` con `turnOn()`, `turnOff()`, `setChannel()`.",
+      "Implementa `TV`, `Radio` y `Speaker` como implementaciones concretas.",
+      "Crea la abstracción `RemoteControl` que mantenga referencia a un `Device`.",
+      "Implementa `BasicRemote` y `AdvancedRemote` que deleguen al dispositivo."
+    ],
+    "starterCode": "// TODO: Define Device interface\n\n// TODO: Implement TV class\n\n// TODO: Implement Radio class\n\n// TODO: Implement Speaker class\n\n// TODO: Create RemoteControl abstract class\n\n// TODO: Implement BasicRemote\n\n// TODO: Implement AdvancedRemote\n\n// Demo:\nconst tvRemote = new BasicRemote(new TV());\ntvRemote.togglePower();\ntvRemote.nextChannel();\n"
+  }
+}

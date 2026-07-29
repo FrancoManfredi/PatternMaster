@@ -1,0 +1,76 @@
+{
+  "slug": "builder",
+  "title": "Builder",
+  "category": "CREACIONAL",
+  "categoryLabel": "Patrón Creacional",
+  "difficulty": "Medio",
+  "difficultyLevel": 2,
+  "description": "Separá la construcción de un objeto complejo de su representación, permitiendo crear diferentes tipos y representaciones del mismo objeto paso a paso.",
+  "codeTag": "CREATIONAL_03",
+  "theory": {
+    "problem": "El Problema del Telescoping Constructor",
+    "problemDescription": "Imagina que estás construyendo una clase `House` que puede tener 15 propiedades opcionales: color de paredes, tipo de techo, número de ventanas, material del piso, etc. Al principio creás un constructor con todos esos parámetros, pero la mayoría son null. Después agregás más opciones y el constructor crece sin control. No sabés qué parámetro es cuál, y agregar uno nuevo rompe todos los llamadas existentes.",
+    "beforeAfter": {
+      "before": "Constructor Telescópico",
+      "after": "Construcción Paso a Paso"
+    }
+  },
+  "analogy": {
+    "title": "La Analogía de la Pizza",
+    "description": "Armar una pizza es un proceso siempre igual: (1) elegís la masa, (2) agregás la salsa, (3) ponés los toppings, (4) la hornear. Pero el resultado varía según lo que elijas en cada paso. El mesero (Director) sigue la receta, vos elegís los ingredientes (Builder). No necesitás decirle al horno todo de una vez — armás la pizza paso a paso.",
+    "quote": "El proceso es siempre el mismo, pero el resultado depende de tus elecciones en cada paso."
+  },
+  "realCases": [
+    {
+      "title": "SQL Query Builders",
+      "description": "Librerías como Knex.js o Sequelize usan Builder para construir queries SQL: `.select().from('users').where('age', '>', 18).orderBy('name')`. Cada método modifica el builder internamente y `.build()` genera la query final."
+    },
+    {
+      "title": "HTTP Request Builders",
+      "description": "OkHttp, axios wrappers y fetch helpers usan Builder para construir requests complejos: `.setMethod('POST').setUrl('/api').addHeader('auth', token).setBody(data).build()`. Sin Builder, tendrías un objeto con 20 parámetros opcionales."
+    },
+    {
+      "title": "Document Builders",
+      "description": "Generadores de PDF y HTML templates (Puppeteer, PDFKit) usan Builder para construir documentos paso a paso: `.setTitle().addPage().addImage().addTable().build()`. Cada paso agrega una parte del documento final."
+    }
+  ],
+  "sections": {
+    "howItWorks": {
+      "title": "¿Cómo funciona Builder?",
+      "description": "El patrón Builder se compone de cuatro actores principales:\n\n1. **Producto**: El objeto complejo que se está construyendo. Tiene muchas partes opcionales.\n\n2. **Builder (Interfaz)**: Define los pasos abstractos para construir el Producto. Cada paso corresponde a una parte del objeto.\n\n3. **Builders Concretos**: Implementan la interfaz Builder y proporcionan implementaciones específicas para cada paso. Mantienen el estado interno del objeto en construcción.\n\n4. **Director** (opcional): Define el orden de los pasos de construcción. Usa el Builder para encapsular una receta predefinida.\n\nLa clave está en que la construcción es SEPARADA de la representación. Podés tener el mismo proceso de construcción generar diferentes resultados finales.",
+      "structureCode": "// === ESTRUCTURA DEL PATRÓN BUILDER ===\n\n// 1. Producto — el objeto complejo\nclass House {\n  constructor(\n    public walls: string,\n    public roof: string,\n    public windows: number,\n    public doors: number,\n    public garage: boolean\n  ) {}\n\n  describe() {\n    console.log(`Casa con ${this.walls}, techo ${this.roof}, ${this.windows} ventanas`);\n  }\n}\n\n// 2. Interfaz Builder\ninterface HouseBuilder {\n  setWalls(type: string): this;\n  setRoof(type: string): this;\n  setWindows(count: number): this;\n  setDoors(count: number): this;\n  setGarage(has: boolean): this;\n  build(): House;\n}\n\n// 3. Builder Concreto\nclass ConcreteHouseBuilder implements HouseBuilder {\n  private house: Partial<House> = {};\n\n  setWalls(type: string) { this.house.walls = type; return this; }\n  setRoof(type: string) { this.house.roof = type; return this; }\n  setWindows(count: number) { this.house.windows = count; return this; }\n  setDoors(count: number) { this.house.doors = count; return this; }\n  setGarage(has: boolean) { this.house.garage = has; return this; }\n\n  build(): House {\n    return new House(\n      this.house.walls ?? 'concrete',\n      this.house.roof ?? 'tile',\n      this.house.windows ?? 4,\n      this.house.doors ?? 2,\n      this.house.garage ?? false\n    );\n  }\n}\n\n// 4. Director — receta predefinida\nclass HouseDirector {\n  static buildLuxuryHouse(builder: HouseBuilder): House {\n    return builder\n      .setWalls('marble')\n      .setRoof('slate')\n      .setWindows(12)\n      .setDoors(6)\n      .setGarage(true)\n      .build();\n  }\n}\n\n// Uso:\nconst builder = new ConcreteHouseBuilder();\nconst house = HouseDirector.buildLuxuryHouse(builder);\nhouse.describe();"
+    },
+    "prosCons": {
+      "pros": [
+        "Elimina el telescoping constructor: en lugar de 15 parámetros, tenés métodos encadenados claros.",
+        "Construcción paso a paso: podés crear objetos con configuraciones muy diferentes usando el mismo builder.",
+        "Reutilización: el Director encapsula recetas predefinidas que podés reutilizar.",
+        "Inmutabilidad parcial: podés construir el objeto gradualmente sin preocuparte por el estado intermedio.",
+        "Legibilidad: el código cliente lee como una receta: `.setWalls().setRoof().build()`."
+      ],
+      "cons": [
+        "Más código: cada producto complejo necesita su propio Builder.",
+        "Puede ser over-engineering si el objeto tiene pocas propiedades (3-4 parámetros alcanza).",
+        "El patrón Director es opcional y a menudo innecesario — muchos proyectos solo usan Builder sin Director.",
+        "Los builders concretos mantienen estado mutable internamente, lo que puede causar bugs si no se usan correctamente."
+      ]
+    },
+    "whenToUse": "Usá Builder cuando necesitás construir objetos con muchos parámetros opcionales y querés legibilidad. Es ideal para: objetos de configuración complejos (servidores, clientes HTTP), construcción de documentos (PDF, HTML, queries SQL), objetos con múltiples representaciones (casa de lujo vs económica), o cuando el proceso de construcción es el mismo pero los pasos varían.",
+    "whenNotToUse": "NO uses Builder si el objeto tiene pocos parámetros (menos de 5) — un constructor simple alcanza. Tampoco si el objeto es inmutable y sencillo: un `new Object(config)` es más directo. Si no necesitás diferentes representaciones del mismo objeto, Builder agrega complejidad innecesaria."
+  },
+  "codeBefore": "class House {\n  constructor(\n    public walls: string,\n    public roof: string,\n    public windows: number,\n    public doors: number,\n    public hasGarage: boolean,\n    public hasPool: boolean,\n    public hasGarden: boolean,\n    public floorType: string,\n    public paintColor: string,\n    public chimneyStyle: string,\n    public insulationType: string,\n    public solarPanels: boolean\n  ) {}\n}\n\n// ¿Qué es cada null?\nconst house = new House('brick', 'tile', 6, 2, true, false, null, null, null, null, null, false);",
+  "codeAfter": "// Builder encadenado — legible y seguro\nconst house = new ConcreteHouseBuilder()\n  .setWalls('brick')\n  .setRoof('tile')\n  .setWindows(6)\n  .setDoors(2)\n  .setGarage(true)\n  .build();\n\n// O con Director para una receta predefinida\nconst luxuryHouse = HouseDirector.buildLuxuryHouse(new ConcreteHouseBuilder());",
+  "exercise": {
+    "title": "Reto de Implementación",
+    "fileName": "Computer_Builder.ts",
+    "statement": "Implementa un Builder para construir PCs con diferentes configuraciones (gaming, office, server).",
+    "instructions": "Creá un `ComputerBuilder` con métodos encadenables para configurar CPU, GPU, RAM, almacenamiento, cooler y más. Implementá builders concretos para `GamingComputerBuilder` (alto rendimiento) y `OfficeComputerBuilder` (básico). Creá un Director con recetas predefinidas.",
+    "acceptanceCriteria": [
+      "Define la interfaz `ComputerBuilder` con métodos encadenables (return this).",
+      "Implementa `GamingComputerBuilder` con specs de alto rendimiento (GPU dedicada, 32GB RAM, SSD NVMe).",
+      "Implementa `OfficeComputerBuilder` con specs básicas (GPU integrada, 8GB RAM, SSD SATA).",
+      "Crea un `ComputerDirector` con métodos estáticos `buildGamingPC()` y `buildOfficePC()`."
+    ],
+    "starterCode": "// TODO: Define Computer class with specs\n\n// TODO: Define ComputerBuilder interface\n\n// TODO: Implement GamingComputerBuilder\n\n// TODO: Implement OfficeComputerBuilder\n\n// TODO: Create ComputerDirector\n\n// Demo:\nconst gamingPC = ComputerDirector.buildGamingPC(new GamingComputerBuilder());\nconsole.log(gamingPC);\n\nconst officePC = ComputerDirector.buildOfficePC(new OfficeComputerBuilder());\nconsole.log(officePC);"
+  }
+}

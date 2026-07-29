@@ -1,0 +1,77 @@
+{
+  "slug": "observer",
+  "title": "Observer",
+  "category": "COMPORTAMIENTO",
+  "categoryLabel": "Patrón de Comportamiento",
+  "difficulty": "Intermedio",
+  "difficultyLevel": 2,
+  "description": "Define una dependencia uno a muchos entre objetos de modo que cuando un objeto cambia de estado, todos sus dependientes son notificados y actualizados automáticamente. Es la base de los sistemas reactivos y pub/sub.",
+  "codeTag": "BEHAVIORAL_09",
+  "theory": {
+    "problem": "El Problema de las Notificaciones Inconscientes",
+    "problemDescription": "Imagina que estás construyendo una plataforma de trading. Cuando el precio de una acción cambia, varios inversores necesitan enterarse al instante para decidir si compran o venden. Si cada inversor consulta el precio periódicamente (polling), desperdicias recursos y perdés tiempo de reacción. El patrón Observer sugiere que el objeto que cambia (el subject) mantenga una lista de sus observadores y los notifique automáticamente cuando cambie, sin que ellos necesiten preguntar. Esto reduce el acoplamiento y mejora la eficiencia.",
+    "beforeAfter": {
+      "before": "Polling Ineficiente",
+      "after": "Notificación Reactiva"
+    }
+  },
+  "analogy": {
+    "title": "La Analogía de YouTube",
+    "description": "Cuando te suscribís a un canal de YouTube, no tenés que entrar a la plataforma cada cinco minutos para ver si hay videos nuevos. En su lugar, YouTube te notifica automáticamente cuando el canal publica contenido. Vos elegís qué canales seguir, y YouTube se encarga de avisarte cuando hay novedades. Es exactamente el patrón Observer: el canal es el subject, vos sos el observer, y la suscripción es el vínculo entre ambos.",
+    "quote": "Te suscribís a un canal y YouTube te avisa cuando hay contenido nuevo — sin que tengas que preguntar."
+  },
+  "realCases": [
+    {
+      "title": "EventEmitter en Node.js",
+      "description": "El módulo EventEmitter de Node.js es una implementación directa del patrón Observer. Los objetos emiten eventos y otros objetos se suscriben para escuchar esos eventos. Cuando el emisor dispara un evento, todos los suscriptores reciben la notificación. Esto es la base de todo el ecosistema de streams y manejo de E/S en Node."
+    },
+    {
+      "title": "Stores Reactivos (Zustand, Redux, MobX)",
+      "description": "Las librerías de estado como Zustand, Redux y MobX implementan Observer internamente. Cuando el store cambia, todos los componentes suscritos se re-renderizan automáticamente. El componente no necesita preguntar si el estado cambió — el store lo notifica. Esto es el patrón Observer aplicado a la gestión de estado en interfaces de usuario."
+    },
+    {
+      "title": "DOM Event Listeners",
+      "description": "Los event listeners del DOM son una implementación nativa del patrón Observer. Cuando hacés click en un botón, el navegador notifica a todos los listeners registrados para ese evento. Cada listener reacciona de forma independiente. El botón no conoce a los listeners — solo sabe que tiene que notificar a los que estén escuchando."
+    }
+  ],
+  "sections": {
+    "howItWorks": {
+      "title": "¿Cómo funciona Observer?",
+      "description": "El patrón Observer se compone de tres actores principales:\n\n1. **Interfaz Subject**: Define los métodos para suscribir, desuscribir y notificar observadores. El subject es el objeto que cambia de estado y necesita notificar a sus dependientes.\n\n2. **Interfaz Observer**: Define el método `update()` que todos los observadores deben implementar. Cuando el subject cambia, llama a `update()` en cada observer registrado.\n\n3. **Subject y Observers Concretos**: El subject concreto almacena la lista de observadores y ejecuta la notificación cuando cambia. Los observers concretos implementan `update()` con la lógica que quieran ejecutar cuando reciban la notificación.\n\nLa clave está en que el subject no conoce el tipo concreto de sus observers — solo conoce la interfaz Observer. Esto permite agregar nuevos observers sin modificar el subject.",
+      "structureCode": "// === ESTRUCTURA DEL PATRÓN OBSERVER ===\n\n// 1. Interfaz Observer (el contrato)\ninterface PriceObserver {\n  update(stock: string, price: number): void;\n}\n\n// 2. Interfaz Subject (gestiona suscripciones)\ninterface PriceSource {\n  subscribe(observer: PriceObserver): void;\n  unsubscribe(observer: PriceObserver): void;\n  notify(): void;\n}\n\n// 3. Subject Concreto (notifica cuando cambia)\nclass StockMarket implements PriceSource {\n  private observers: PriceObserver[] = [];\n  private prices: Map<string, number> = new Map();\n\n  subscribe(observer: PriceObserver) {\n    this.observers.push(observer);\n  }\n\n  unsubscribe(observer: PriceObserver) {\n    this.observers = this.observers.filter(o => o !== observer);\n  }\n\n  notify() {\n    this.observers.forEach(observer => {\n      this.prices.forEach((price, stock) => {\n        observer.update(stock, price);\n      });\n    });\n  }\n\n  setPrice(stock: string, price: number) {\n    this.prices.set(stock, price);\n    this.notify();\n  }\n}\n\n// 4. Observers Concretos\nclass Logger implements PriceObserver {\n  update(stock: string, price: number) {\n    console.log(`[LOG] ${stock}: $${price}`);\n  }\n}\n\nclass AlertSystem implements PriceObserver {\n  update(stock: string, price: number) {\n    if (price > 100) console.log(`[ALERT] ${stock} superó $100!`);\n  }\n}\n\n// Uso:\nconst market = new StockMarket();\nmarket.subscribe(new Logger());\nmarket.subscribe(new AlertSystem());\nmarket.setPrice('AAPL', 150); // Ambos observers notificados"
+    },
+    "prosCons": {
+      "pros": [
+        "Bajo acoplamiento: el subject no conoce el tipo concreto de sus observers.",
+        "Notificación en tiempo real: los observers se enteran al instante cuando el subject cambia.",
+        "Principio Abierto/Cerrado (OCP): podés agregar nuevos observers sin modificar el subject.",
+        "Comunicación dinámica: podés suscribir y desuscribir observers en tiempo de ejecución.",
+        "Base de sistemas reactivos: es el patrón fundamental para arquitecturas reactivas y pub/sub."
+      ],
+      "cons": [
+        "Notificaciones en cascada: un cambio puede disparar múltiples updates que generan más cambios.",
+        "Rendimiento: si hay muchos observers, la notificación puede ser costosa.",
+        "Dificultad de depuración: el flujo de control no es secuencial, lo que dificulta el rastreo de errores.",
+        "Memory leaks: si los observers no se desuscriben correctamente, pueden quedarse en memoria.",
+        "Orden de notificación: el subject notifica en orden de suscripción, lo que puede causar efectos secundarios."
+      ]
+    },
+    "whenToUse": "Usá Observer cuando necesites notificar a múltiples objetos cuando el estado de otro cambie, sin acoplarlos directamente. Es ideal para: sistemas de eventos y pub/sub, stores reactivos en UI, monitoreo y logging, sistemas de alertas, patrón MVC donde la vista observa al modelo, y cualquier caso donde un objeto deba reaccionar a cambios en otro sin conocerlo directamente.",
+    "whenNotToUse": "NO uses Observer si solo tienes un par de objetos que necesitan comunicarse — una llamada directa es más simple. Tampoco si la notificación debe ser síncrona y ordenada de forma estricta, ya que Observer no garantiza el orden de ejecución. Si los updates son muy frecuentes y costosos, el patrón puede degradar el rendimiento."
+    },
+  "codeBefore": "class PriceTracker {\n  private price: number = 0;\n  private logger: Logger;\n  private alertSystem: AlertSystem;\n\n  constructor(logger: Logger, alert: AlertSystem) {\n    this.logger = logger;\n    this.alertSystem = alert;\n  }\n\n  setPrice(price: number) {\n    this.price = price;\n    this.logger.log(price);\n    this.alertSystem.check(price);\n    // Agregar un nuevo observer requiere modificar esta clase\n  }\n}",
+  "codeAfter": "// 1. Interfaz común\ninterface Observer {\n  update(price: number): void;\n}\n\n// 2. Subject mantiene lista de observers\nclass PriceTracker {\n  private observers: Observer[] = [];\n  private price: number = 0;\n\n  subscribe(obs: Observer) { this.observers.push(obs); }\n  unsubscribe(obs: Observer) {\n    this.observers = this.observers.filter(o => o !== obs);\n  }\n\n  setPrice(price: number) {\n    this.price = price;\n    this.observers.forEach(obs => obs.update(price));\n  }\n}\n\n// 3. Observers implementan update()\nclass Logger implements Observer {\n  update(price: number) { console.log(`Price: ${price}`); }\n}\n\nclass AlertSystem implements Observer {\n  update(price: number) {\n    if (price > 100) console.log('Price alert!');\n  }\n}\n\n// Nuevo observer sin modificar el subject\nclass Analytics implements Observer {\n  update(price: number) { /* track metrics */ }\n}",
+  "exercise": {
+    "title": "Reto de Implementación",
+    "fileName": "NotificadorDeAcciones.ts",
+    "statement": "Implementa un sistema de notificación de precios de acciones usando el patrón Observer donde múltiples inversores reciben notificaciones cuando los precios cambian.",
+    "instructions": "Crea un `StockTicker` que mantiene precios de acciones y notifica a los inversores cuando un precio cambia. Cada inversor puede tener diferentes estrategias de reacción: uno puede querer comprar si el precio baja, otro puede querer vender si sube, y otro puede solo querer registrar los cambios.",
+    "acceptanceCriteria": [
+      "Crea una interfaz `StockObserver` con el método `update()`.",
+      "Implementa `StockTicker` como subject con `subscribe()`, `unsubscribe()` y `notify()`.",
+      "Crea al menos 2 tipos de observers con comportamientos diferentes (comprador, vendedor, logger).",
+      "Cuando el precio de una acción cambia, todos los observers suscritos reciben la notificación."
+    ],
+    "starterCode": "// TODO: Define StockObserver interface with update()\n\n// TODO: Implement StockTicker as subject\n// It should manage subscriptions and notify on price changes\n\n// TODO: Implement at least 2 observer types:\n// - Buyer: buys when price drops below a threshold\n// - Seller: sells when price rises above a threshold\n\nconst ticker = new StockTicker();\nconst buyer = new Buyer('Alice', 100);\nconst seller = new Seller('Bob', 150);\n\nticker.subscribe(buyer);\nticker.subscribe(seller);\n\nticker.setPrice('AAPL', 90);\n// → Buyer Alice sees: 'AAPL at $90 — buying!'\n\nticker.setPrice('AAPL', 160);\n// → Seller Bob sees: 'AAPL at $160 — selling!'"
+  }
+}

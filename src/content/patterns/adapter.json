@@ -1,0 +1,76 @@
+{
+  "slug": "adapter",
+  "title": "Adapter",
+  "category": "ESTRUCTURAL",
+  "categoryLabel": "Patrón Estructural",
+  "difficulty": "Fácil",
+  "difficultyLevel": 1,
+  "description": "Convierte la interfaz de una clase en otra interfaz que los clientes esperan. Adapter permite que clases con interfaces incompatibles trabajen juntas.",
+  "codeTag": "STRUCTURAL_01",
+  "theory": {
+    "problem": "El Problema de las Interfaces Incompatibles",
+    "problemDescription": "Imagina que estás integrando un sistema de pagos nuevo en tu aplicación. Tenés un proveedor de pagos que funciona perfectamente, pero cuando querés agregar un segundo proveedor, descubrís que cada uno tiene una interfaz completamente diferente: uno usa `charge(amount, currency)` y el otro usa `processPayment(value, coin)`. No podés usar ambos directamente sin modificar tu código cliente o el de los proveedores. El patrón Adapter sugiere crear una capa intermedia que traduzca las llamadas de una interfaz a otra.",
+    "beforeAfter": {
+      "before": "Interfaces Incompatibles",
+      "after": "Interfaz Común Adaptada"
+    }
+  },
+  "analogy": {
+    "title": "La Analogía del Adaptador de Corriente",
+    "description": "Cuando viajas a otro país, tus enchufes no sirven porque los enchufes locales tienen una forma diferente. No vas a cambiar los cables de todos tus aparatos — comprás un adaptador de corriente que conecta tu enchufe al socket local. El adaptador no cambia cómo funciona tu aparato; solo traduce la interfaz física.",
+    "quote": "No cambies al cliente ni al proveedor — creá un traductor entre ambos."
+  },
+  "realCases": [
+    {
+      "title": "Plugins de carga en WordPress/WooCommerce",
+      "description": "Cada proveedor de pago (Stripe, PayPal, Mercado Pago) implementa una interfaz común de WooCommerce. El adaptador traduce la llamada de WooCommerce al SDK específico de cada proveedor."
+    },
+    {
+      "title": "JDBC/ODBC como adaptadores",
+      "description": "JDBC adapta la interfaz estándar de Java a los protocolos específicos de cada base de datos (MySQL, PostgreSQL, Oracle). El código cliente usa la misma API sin importar qué BD hay detrás."
+    },
+    {
+      "title": "APIs de datos externas",
+      "description": "Cuando integrás una API de clima, una de mapas y una de traducción, cada una tiene formatos diferentes. Un Adaptador normaliza las respuestas a un formato interno que tu aplicación entiende."
+    }
+  ],
+  "sections": {
+    "howItWorks": {
+      "title": "¿Cómo funciona Adapter?",
+      "description": "El patrón Adapter se compone de tres actores principales:\n\n1. **Interfaz Objetivo**: Es la interfaz que el cliente espera usar. Define el contrato que el Adaptador debe cumplir.\n\n2. **Adaptador**: Implementa la interfaz Objetivo y delega las llamadas al Adaptado. Se encarga de traducir los parámetros y el formato de retorno.\n\n3. **Adaptado**: Es la clase existente con una interfaz incompatible. No se modifica — el Adaptador se adapta a él.\n\nLa clave está en que el cliente solo conoce la Interfaz Objetivo. Puede intercambiar proveedores sin cambiar una sola línea de código cliente. El Adaptador actúa como traductor entre dos mundos.",
+      "structureCode": "// === ESTRUCTURA DEL PATRÓN ADAPTER ===\n\n// 1. Interfaz Objetivo (lo que el cliente espera)\ninterface PaymentProvider {\n  pay(amount: number, currency: string): Promise<PaymentResult>;\n  refund(transactionId: string): Promise<boolean>;\n}\n\n// 2. Adaptados (clases existentes con interfaces incompatibles)\nclass StripeAPI {\n  charge(params: { amount_in_cents: number; currency_code: string }) {\n    return { id: 'stripe_tx_123', status: 'succeeded' };\n  }\n  createRefund(charge_id: string) {\n    return { refunded: true };\n  }\n}\n\nclass PayPalAPI {\n  processPayment(value: number, coin: string) {\n    return { confirmation: 'pp_tx_456', state: 'completed' };\n  }\n  returnPayment(confirmation: string) {\n    return { returned: true };\n  }\n}\n\n// 3. Adaptadores (traducen la interfaz)\nclass StripeAdapter implements PaymentProvider {\n  private stripe = new StripeAPI();\n\n  async pay(amount: number, currency: string): Promise<PaymentResult> {\n    const result = this.stripe.charge({\n      amount_in_cents: amount * 100,\n      currency_code: currency\n    });\n    return { success: true, transactionId: result.id };\n  }\n\n  async refund(transactionId: string): Promise<boolean> {\n    const result = this.stripe.createRefund(transactionId);\n    return result.refunded;\n  }\n}\n\nclass PayPalAdapter implements PaymentProvider {\n  private paypal = new PayPalAPI();\n\n  async pay(amount: number, currency: string): Promise<PaymentResult> {\n    const result = this.paypal.processPayment(amount, currency);\n    return { success: true, transactionId: result.confirmation };\n  }\n\n  async refund(transactionId: string): Promise<boolean> {\n    const result = this.paypal.returnPayment(transactionId);\n    return result.returned;\n  }\n}\n\n// 4. Cliente — solo conoce la interfaz PaymentProvider\nasync function processCheckout(provider: PaymentProvider, amount: number) {\n  const result = await provider.pay(amount, 'USD');\n  console.log(`Pago procesado: ${result.transactionId}`);\n}"
+    },
+    "prosCons": {
+      "pros": [
+        "Principio de Responsabilidad Única: separa la traducción de interfaz de la lógica de negocio.",
+        "Principio Abierto/Cerrado (OCP): podés agregar nuevos proveedores sin modificar el código existente.",
+        "Reutilización: clases existentes con interfaces incompatibles pueden reutilizarse con un Adaptador.",
+        "Testeable: podés crear mocks del Adaptador para tests unitarios sin depender de servicios externos.",
+        "Desacoplamiento: el cliente no depende de implementaciones concretas, solo de la interfaz."
+      ],
+      "cons": [
+        "Complejidad adicional: creás una capa extra de código que puede parecer innecesaria al principio.",
+        "Overhead de traducción: el Adaptador puede agregar un costo mínimo de procesamiento al traducir datos.",
+        "No es trivial cuando la interfaz a adaptar tiene muchos métodos — el Adaptador puede crecer demasiado.",
+        "Si las interfaces son demasiado diferentes, el Adaptador puede necesitar lógica compleja de mapeo."
+      ]
+    },
+    "whenToUse": "Usá Adapter cuando tengas clases con interfaces incompatibles que necesitás usar juntas. Es ideal para: integrar servicios de terceros con APIs diferentes, conectar sistemas legacy con nuevos sistemas, unificar múltiples proveedores bajo una misma interfaz, o cuando no podés modificar las clases existentes (librerías, APIs externas).",
+    "whenNotToUse": "NO uses Adapter si podés modificar las clases originales para que usen la misma interfaz. Tampoco si solo tenés una implementación y no hay nada que adaptar — sería una capa innecesaria. Si la traducción es trivial (un simple renombrado de métodos), quizás sea mejor refactorizar directamente."
+    },
+  "codeBefore": "// Procesador monolítico — cada proveedor tiene su propia lógica\nclass PaymentProcessor {\n  async processStripePayment(amount: number) {\n    const result = await stripe.charge({ amount_in_cents: amount * 100, currency_code: 'USD' });\n    return result.id;\n  }\n\n  async processPayPalPayment(amount: number) {\n    const result = await paypal.processPayment(amount, 'USD');\n    return result.confirmation;\n  }\n\n  async processMercadoPagoPayment(amount: number) {\n    const result = await mp.createPayment({ transaction_amount: amount, currency_id: 'USD' });\n    return result.id;\n  }\n\n  // Cada nuevo proveedor requiere un nuevo método aquí\n}",
+  "codeAfter": "// Interfaz común — todos los proveedores hablan el mismo idioma\ninterface PaymentProvider {\n  pay(amount: number, currency: string): Promise<PaymentResult>;\n  refund(transactionId: string): Promise<boolean>;\n}\n\n// Adaptadores — traducen al SDK específico de cada proveedor\nclass StripeAdapter implements PaymentProvider {\n  async pay(amount: number, currency: string) {\n    const result = await stripe.charge({ amount_in_cents: amount * 100, currency_code: currency });\n    return { success: true, transactionId: result.id };\n  }\n  async refund(txId: string) { return stripe.createRefund(txId).refunded; }\n}\n\n// El cliente solo usa la interfaz — cambiar proveedor es trivial\nasync function checkout(provider: PaymentProvider, amount: number) {\n  return provider.pay(amount, 'USD');\n}",
+  "exercise": {
+    "title": "Reto de Implementación",
+    "fileName": "AdaptadorDePago.ts",
+    "statement": "Implementa un adaptador de pagos que unifique dos proveedores con interfaces incompatibles bajo una misma interfaz.",
+    "instructions": "Tenés dos proveedores de pago con APIs diferentes: `StripeAPI` usa `charge(amount_in_cents, currency)` y `PayPalAPI` usa `processPayment(value, coin)`. Creá una interfaz `PaymentProvider` común y dos adaptadores que traduzcan las llamadas. El cliente solo debe conocer la interfaz `PaymentProvider`.",
+    "acceptanceCriteria": [
+      "Define la interfaz `PaymentProvider` con métodos `pay()` y `refund()`.",
+      "Implementa `StripeAdapter` que traduzca de `charge()` a `pay()`.",
+      "Implementa `PayPalAdapter` que traduzca de `processPayment()` a `pay()`.",
+      "Crea una función `checkout()` que acepte cualquier `PaymentProvider` sin conocer el proveedor concreto."
+    ],
+    "starterCode": "// TODO: Define PaymentProvider interface\n\n// TODO: Create mock StripeAPI class\ninterface StripeAPI {\n  charge(params: { amount_in_cents: number; currency_code: string }): { id: string; status: string };\n}\n\n// TODO: Create mock PayPalAPI class\ninterface PayPalAPI {\n  processPayment(value: number, coin: string): { confirmation: string; state: string };\n}\n\n// TODO: Implement StripeAdapter\n\n// TODO: Implement PayPalAdapter\n\n// Demo:\nasync function checkout(provider: PaymentProvider, amount: number) {\n  // Your adapter-based implementation here\n}\n"
+  }
+}

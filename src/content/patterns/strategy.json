@@ -1,0 +1,76 @@
+{
+  "slug": "strategy",
+  "title": "Strategy",
+  "category": "COMPORTAMIENTO",
+  "categoryLabel": "Patrón de Comportamiento",
+  "difficulty": "Fácil",
+  "difficultyLevel": 1,
+  "description": "Define una familia de algoritmos, encapsula cada uno de ellos y los hace intercambiables. Strategy permite que el algoritmo varíe independientemente de los clientes que lo utilizan.",
+  "codeTag": "BEHAVIORAL_03",
+  "theory": {
+    "problem": "El Problema del Monolito Condicional",
+    "problemDescription": "Imagina que creas una aplicación de navegación. Al principio, solo traza rutas para coches. Luego, agregas rutas para ciclistas, luego para peatones, y finalmente para transporte público. El código que calcula la ruta se convierte en un gigante monolito lleno de sentencias `if/else`. Cualquier cambio en un algoritmo puede romper los demás. El patrón Strategy sugiere que tomes esa clase que hace algo específico de muchas formas diferentes y extraigas esos algoritmos en clases separadas llamadas *estrategias*.",
+    "beforeAfter": {
+      "before": "Monolito Frágil",
+      "after": "Estrategias Modulares"
+    }
+  },
+  "analogy": {
+    "title": "La Analogía del Viaje",
+    "description": "Tienes que ir al aeropuerto. Puedes coger un autobús, pedir un taxi o ir en bicicleta. Estas son tus estrategias de transporte. Tú eres el Contexto y eliges una estrategia dependiendo de factores como tu presupuesto o tus restricciones de tiempo.",
+    "quote": "Tú eres el Contexto y eliges una estrategia dependiendo de factores como tu presupuesto o tus restricciones de tiempo."
+  },
+  "realCases": [
+    {
+      "title": "Algoritmos de Pricing",
+      "description": "Las plataformas e-commerce usan Strategy para calcular precios dinámicamente: precio base, descuento por volumen, precio premium, etc. Cada estrategia encapsula una fórmula distinta, y el carrito de compras solo necesita recibir la estrategia correcta según el usuario."
+    },
+    {
+      "title": "Validación de Datos",
+      "description": "Un sistema de validación de formularios puede tener estrategias de validación diferentes: validación de email, de número de teléfono, de código postal. Cada una es una clase separada que implementa una interfaz común `Validator`."
+    },
+    {
+      "title": "Estrategias de Compresión",
+      "description": "Librerías como Sharp o FFmpeg permiten cambiar algoritmos de compresión (JPEG, PNG, WebP) sin modificar el código cliente. El usuario elige la estrategia y el contexto delega la compresión."
+    }
+  ],
+  "sections": {
+    "howItWorks": {
+      "title": "¿Cómo funciona Strategy?",
+      "description": "El patrón Strategy se compone de tres actores principales:\n\n1. **Contexto**: Es la clase que usa una estrategia. No sabe los detalles de implementación, solo conoce la interfaz común. Por ejemplo, un `Navigator` que calcula rutas.\n\n2. **Interfaz Strategy**: Define el contrato que todas las estrategias deben cumplir. Generalmente es una interfaz o clase abstracta con un único método.\n\n3. **Estrategias Concretas**: Son las implementaciones individuales del algoritmo. Cada una encapsula una variante distinta. Pueden agregarse nuevas sin modificar el código existente.\n\nLa clave está en que el Contexto delega el comportamiento a una estrategia externa en lugar de implementarlo directamente. Esto permite cambiar el algoritmo en tiempo de ejecución simplemente intercambiando la estrategia.",
+      "structureCode": "// === ESTRUCTURA DEL PATRÓN STRATEGY ===\n\n// 1. Interfaz Strategy (el contrato)\ninterface PaymentStrategy {\n  pay(amount: number): PaymentResult;\n}\n\n// 2. Estrategias Concretas (las variantes)\nclass CreditCardStrategy implements PaymentStrategy {\n  constructor(private cardNumber: string) {}\n  \n  pay(amount: number): PaymentResult {\n    // Lógica específica de pago con tarjeta\n    return { success: true, transactionId: 'tx_123' };\n  }\n}\n\nclass PayPalStrategy implements PaymentStrategy {\n  constructor(private email: string) {}\n  \n  pay(amount: number): PaymentResult {\n    // Lógica específica de pago con PayPal\n    return { success: true, transactionId: 'tx_456' };\n  }\n}\n\nclass CryptoStrategy implements PaymentStrategy {\n  pay(amount: number): PaymentResult {\n    // Lógica específica de pago con cripto\n    return { success: true, transactionId: 'tx_789' };\n  }\n}\n\n// 3. Contexto (usa la estrategia sin conocer detalles)\nclass Checkout {\n  constructor(private strategy: PaymentStrategy) {}\n  \n  setStrategy(strategy: PaymentStrategy) {\n    this.strategy = strategy;\n  }\n\n  processOrder(amount: number) {\n    return this.strategy.pay(amount);\n  }\n}\n\n// Uso:\nconst checkout = new Checkout(new CreditCardStrategy('4111-1111-1111-1111'));\ncheckout.processOrder(100);\ncheckout.setStrategy(new PayPalStrategy('user@example.com'));\ncheckout.processOrder(200);"
+    },
+    "prosCons": {
+      "pros": [
+        "Principio de Responsabilidad Única: cada estrategia se ocupa de UNA variante del algoritmo.",
+        "Principio Abierto/Cerrado (OCP): puedes agregar nuevas estrategias sin modificar el código existente.",
+        "Elimina condicionales complejos: adiós a los `if/else` y `switch` gigantes.",
+        "Intercambio en tiempo de ejecución: puedes cambiar el algoritmo dinámicamente.",
+        "Testeable de forma aislada: cada estrategia se prueba por separado."
+      ],
+      "cons": [
+        "Aumenta el número de clases: cada variante requiere su propia clase.",
+        "El cliente debe conocer las estrategias disponibles para elegir la correcta.",
+        "Puede ser excesivo si solo tienes 2-3 variantes simples. A veces un `switch` pequeño alcanza.",
+        "La comunicación entre Contexto y Estrategia puede ser costosa si comparten muchos datos."
+      ]
+    },
+    "whenToUse": "Usá Strategy cuando tengas varias variantes de un algoritmo que cambian según el contexto del usuario. Es ideal para: sistemas de pago con múltiples métodos, validaciones que varían por tipo de dato, cálculos de impuestos o descuentos según el país, formatos de exportación (PDF, CSV, JSON), y cualquier caso donde tengas un `switch` o `if/else` que crece sin control.",
+    "whenNotToUse": "NO uses Strategy si solo tienes 2 variantes simples que rara vez cambian. Tampoco si las variantes comparten tanto estado que la interfaz se vuelve compleja con 10 parámetros. Si las variantes NO son intercambiables (el algoritmo depende del contexto de forma inseparable), probablemente necesitás otro patrón como Template Method."
+  },
+  "codeBefore": "class Navigator {\n  buildRoute(A: Point, B: Point, mode: string) {\n    if (mode === 'car') {\n      // ... 500 líneas de cálculo para coches\n    } else if (mode === 'walking') {\n      // ... 400 líneas de cálculo para peatones\n    } else if (mode === 'bike') {\n      // ... 450 líneas de cálculo para bicis\n    }\n  }\n}",
+  "codeAfter": "// 1. Interfaz común\ninterface RouteStrategy {\n  buildRoute(A: Point, B: Point): Route;\n}\n\n// 2. Estrategias concretas aisladas\nclass CarStrategy implements RouteStrategy {\n  buildRoute(A: Point, B: Point) { /* ... */ }\n}\n\n// 3. El Contexto usa la interfaz\nclass Navigator {\n  private strategy: RouteStrategy;\n  setStrategy(s: RouteStrategy) { this.strategy = s; }\n  buildRoute(A: Point, B: Point) {\n    return this.strategy.buildRoute(A, B);\n  }\n}",
+  "exercise": {
+    "title": "Reto de Implementación",
+    "fileName": "eCommerce_Tax_Calculator.ts",
+    "statement": "Implementa un calculador de impuestos para un e-commerce usando el patrón Strategy.",
+    "instructions": "Actualmente, la clase `Order` calcula los impuestos usando una estructura condicional basada en el país destino (ES, US, UK). Refactorízalo para usar estrategias concretas.",
+    "acceptanceCriteria": [
+      "Crea una interfaz `TaxStrategy`.",
+      "Implementa `SpainTaxStrategy` (21%).",
+      "Implementa `USTaxStrategy` (variado según estado, asume 7%).",
+      "Modifica `Order` para aceptar una estrategia."
+    ],
+    "starterCode": "// TODO: Define TaxStrategy interface here\n\n// TODO: Implement concrete strategies\n\nclass Order {\n  constructor(public amount: number) {}\n\n  calculateTotal(country: string) {\n    // TODO: Refactor to use injected strategy instead of if/else\n  }\n}"
+  }
+}

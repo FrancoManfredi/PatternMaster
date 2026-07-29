@@ -1,0 +1,77 @@
+{
+  "slug": "mediator",
+  "title": "Mediator",
+  "category": "COMPORTAMIENTO",
+  "categoryLabel": "Patrón de Comportamiento",
+  "difficulty": "Intermedio",
+  "difficultyLevel": 2,
+  "description": "Define un objeto que encapsula cómo interactúan un conjunto de objetos. Mediator promueve el bajo acoplamiento al evitar que los objetos se refieran directamente unos a otros, permitiendo variar sus interacciones independientemente.",
+  "codeTag": "BEHAVIORAL_07",
+  "theory": {
+    "problem": "El Problema de la Telaraña de Dependencias",
+    "problemDescription": "Imagina que estás construyendo un sistema de chat con múltiples salas. Cada usuario necesita enviar mensajes a varios otros usuarios. Sin un mediador, cada componente tiene referencias directas a todos los demás, creando una telaraña de dependencias donde cambiar un componente significa modificar múltiples archivos. El patrón Mediator sugiere que extraigas todas las interacciones entre objetos a una clase separada que actúe como un central de comunicaciones, de modo que cada componente solo conozca al mediador, no a los demás.",
+    "beforeAfter": {
+      "before": "Telaraña de Dependencias",
+      "after": "Comunicación Centralizada"
+    }
+  },
+  "analogy": {
+    "title": "La Analogía de la Torre de Control",
+    "description": "En un aeropuerto, los aviones no se comunican directamente entre sí para coordinar despegues y aterrizajes. Eso sería un caos. En su lugar, todos los aviones hablan con la torre de control, que actúa como mediador. La torre coordina el flujo de tráfico aéreo, decide qué avión despega primero y cuál espera. Cada avión solo necesita conocer a la torre, no a los otros aviones.",
+    "quote": "La torre de control centraliza las comunicaciones para que ningún avión necesite hablar directamente con otro."
+  },
+  "realCases": [
+    {
+      "title": "Salas de Chat",
+      "description": "En una aplicación de mensajería, el servidor de chat actúa como mediador. Cuando un usuario envía un mensaje, no lo envía directamente a cada destinatario. En su lugar, lo envía al servidor, que se encarga de distribuirlo a los participantes correctos de la sala. Esto permite agregar usuarios, cambiar permisos y moderar contenido sin que los clientes se modifiquen."
+    },
+    {
+      "title": "Coordinación de Componentes UI",
+      "description": "En un formulario complejo, los campos pueden depender unos de otros: si cambia el país, se actualizan las opciones de estado/provincia; si cambia el tipo de documento, se ajusta la validación del número. Un mediador de formulario coordina estas dependencias sin que cada campo conozca a los demás."
+    },
+    {
+      "title": "Controlador MVC",
+      "description": "En el patrón MVC, el Controller actúa como mediador entre la View y el Model. La vista no conoce directamente al modelo, y el modelo no conoce a la vista. El controller recibe eventos de la vista, ejecuta la lógica de negocio en el modelo, y actualiza la vista con los resultados."
+    }
+  ],
+  "sections": {
+    "howItWorks": {
+      "title": "¿Cómo funciona Mediator?",
+      "description": "El patrón Mediator se compone de tres actores principales:\n\n1. **Interfaz Mediator**: Define el contrato que todos los mediadores deben cumplir. Es el central de comunicaciones que coordina la interacción entre componentes.\n\n2. **Mediator Concreto**: Implementa la lógica de coordinación. Mantiene referencias a los componentes que coordina y contiene la lógica de negocio que determina cómo interactúan entre sí.\n\n3. **Componentes (Colleagues)**: Son los objetos que interactúan entre sí a través del mediador. Cada componente tiene una referencia al mediador, pero no a los demás componentes. Cuando un componente cambia de estado, notifica al mediador, que decide qué otros componentes deben enterarse.\n\nLa clave está en que los componentes están desacoplados entre sí. No se refieren directamente, solo conocen al mediador. Esto permite modificar las interacciones sin tocar los componentes.",
+      "structureCode": "// === ESTRUCTURA DEL PATRÓN MEDIATOR ===\n\n// 1. Interfaz Mediator (el contrato)\ninterface ChatMediator {\n  sendMessage(message: string, sender: User): void;\n  addUser(user: User): void;\n}\n\n// 2. Mediator Concreto (la coordinación)\nclass ChatRoom implements ChatMediator {\n  private users: User[] = [];\n\n  addUser(user: User) {\n    this.users.push(user);\n    user.setMediator(this);\n  }\n\n  sendMessage(message: string, sender: User) {\n    this.users.forEach(user => {\n      if (user !== sender) {\n        user.receive(message, sender.name);\n      }\n    });\n  }\n}\n\n// 3. Componentes (colleagues)\nclass User {\n  private mediator: ChatMediator | null = null;\n  constructor(public name: string) {}\n\n  setMediator(mediator: ChatMediator) {\n    this.mediator = mediator;\n  }\n\n  send(message: string) {\n    this.mediator?.sendMessage(message, this);\n  }\n\n  receive(message: string, from: string) {\n    console.log(`${from}: ${message}`);\n  }\n}\n\n// Uso:\nconst room = new ChatRoom();\nconst alice = new User('Alice');\nconst bob = new User('Bob');\nroom.addUser(alice);\nroom.addUser(bob);\nalice.send('Hola Bob!'); // Bob recibe: 'Alice: Hola Bob!'"
+    },
+    "prosCons": {
+      "pros": [
+        "Reduce el acoplamiento: los componentes solo conocen al mediador, no entre sí.",
+        "Centraliza la lógica de comunicación: las reglas de interacción están en un solo lugar.",
+        "Reutilización de componentes: los componentes pueden reutilizarse en otros mediadores.",
+        "Principio de Responsabilidad Única: la lógica de coordinación está separada de la lógica de negocio.",
+        "Facilita el mantenimiento: cambiar una regla de interacción implica modificar solo el mediador."
+      ],
+      "cons": [
+        "Mediator puede convertirse en un Dios: si acumula mucha lógica de coordinación, se vuelve complejo y difícil de mantener.",
+        "Rendimiento: la comunicación indirecta puede agregar overhead en sistemas de alta performance.",
+        "Difícil de depurar: el flujo de control pasa por el mediador, lo que puede dificultar el rastreo de mensajes.",
+        "Acoplamiento inverso: los componentes dependen del mediador, lo que puede dificultar su testing aislado.",
+        "Riesgo de God Object: un mediador mal diseñado puede absorber demasiadas responsabilidades."
+      ]
+    },
+    "whenToUse": "Usá Mediator cuando tengas un conjunto de objetos que se comunican de forma compleja y desordenada, y querés reducir el acoplamiento entre ellos. Es ideal para: salas de chat o mensajería, formularios con campos interdependientes, componentes de UI que coordinan acciones entre sí, sistemas de publish/subscribe donde los suscriptores no se conocen entre sí, y cualquier caso donde múltiples objetos necesiten comunicarse pero no querés que tengan referencias directas entre sí.",
+    "whenNotToUse": "NO uses Mediator si solo tienes 2-3 objetos que interactúan de forma simple. Tampoco si las interacciones son tan simples que el mediador solo agrega una capa innecesaria de indirección. Si los objetos no necesitan coordinación centralizada y pueden funcionar de forma independiente, el mediador es overkill."
+    },
+  "codeBefore": "class ChatUser {\n  private users: ChatUser[] = [];\n\n  addUser(user: ChatUser) {\n    this.users.push(user);\n  }\n\n  send(message: string) {\n    this.users.forEach(user => {\n      user.receive(message);\n    });\n  }\n\n  receive(message: string) {\n    console.log(message);\n  }\n}\n\n// Cada usuario conoce a TODOS los demás\nconst alice = new ChatUser();\nconst bob = new ChatUser();\nalice.addUser(bob);\nbob.addUser(alice);",
+  "codeAfter": "// 1. Interfaz común\ninterface Mediator {\n  notify(sender: User, event: string): void;\n}\n\n// 2. Mediator concreto coordina\nclass ChatMediator implements Mediator {\n  private users: User[] = [];\n\n  addUser(user: User) {\n    this.users.push(user);\n    user.setMediator(this);\n  }\n\n  notify(sender: User, event: string) {\n    this.users.forEach(user => {\n      if (user !== sender) user.handle(event);\n    });\n  }\n}\n\n// 3. Los usuarios solo conocen al mediador\nclass User {\n  private mediator: Mediator | null = null;\n  setMediator(m: Mediator) { this.mediator = m; }\n  send(event: string) { this.mediator?.notify(this, event); }\n  handle(event: string) { console.log(event); }\n}",
+  "exercise": {
+    "title": "Reto de Implementación",
+    "fileName": "HogarInteligente.ts",
+    "statement": "Implementa un sistema de hogar inteligente usando el patrón Mediator donde una hub central coordina las interacciones entre luces, termostato y cámara de seguridad.",
+    "instructions": "Cada componente del hogar inteligente (luces, termostato, cámara) no puede comunicarse directamente entre sí. Todos sus eventos pasan por una hub central que decide cómo reaccionar. Por ejemplo, cuando la cámara detecta movimiento, la hub puede encender las luces y ajustar la temperatura.",
+    "acceptanceCriteria": [
+      "Crea una interfaz `SmartHomeMediator` con el método `notify()`.",
+      "Implementa `SmartHomeHub` como mediador concreto que coordine luces, termostato y cámara.",
+      "Cada componente se registra en la hub y solo notifica a la hub, no a otros componentes.",
+      "Cuando un componente cambia de estado, la hub coordina la respuesta de los demás componentes."
+    ],
+    "starterCode": "// TODO: Define SmartHomeMediator interface\n\n// TODO: Implement SmartHomeHub as concrete mediator\n\n// TODO: Implement components: Lights, Thermostat, Camera\n// Each component only references the mediator\n\nconst hub = new SmartHomeHub();\nconst lights = new Lights('Sala');\nconst thermostat = new Thermostat(22);\nconst camera = new Camera('Entrada');\n\nhub.addComponent(lights);\nhub.addComponent(thermostat);\nhub.addComponent(camera);\n\ncamera.detectMotion();\n// → Hub coordina: encender luces + ajustar temperatura\nconsole.log(lights.status);   // → 'on'\nconsole.log(thermostat.temp); // → 24"
+  }
+}

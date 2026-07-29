@@ -1,0 +1,77 @@
+{
+  "slug": "command",
+  "title": "Command",
+  "category": "COMPORTAMIENTO",
+  "categoryLabel": "Patrón de Comportamiento",
+  "difficulty": "Intermedio",
+  "difficultyLevel": 2,
+  "description": "Encapsula una petición como un objeto, permitiendo parametrizar a los clientes con diferentes peticiones, encolar o registrar las peticiones, y soportar operaciones deshacer/rehacer.",
+  "codeTag": "BEHAVIORAL_05",
+  "theory": {
+    "problem": "El Problema de las Peticiones Acopladas",
+    "problemDescription": "Imagina que estás construyendo un editor de texto. Cuando el usuario presiona un botón, el código llama directamente a un método: `document.insertText()`, `document.deleteLine()`, `document.formatParagraph()`. Esto genera un acoplamiento directo entre la interfaz de usuario y la lógica de negocio. No podés deshacer acciones, no podés registrar qué hizo el usuario, y no podés reprogramar botones sin duplicar lógica. El patrón Command sugiere encapsular cada petición como un objeto con sus propios métodos `execute()` y `undo()`. Así, la UI no necesita conocer la lógica interna: solo ejecuta comandos.",
+    "beforeAfter": {
+      "before": "Peticiones Directas",
+      "after": "Objetos Command"
+    }
+  },
+  "analogy": {
+    "title": "La Analogía del Ticket de Restaurante",
+    "description": "En un restaurante, el mesero toma tu pedido y lo escribe en un ticket. Ese ticket viaja a la cocina donde el chef lo ejecuta. El mesero no cocina: solo encapsula la petición en un objeto (el ticket). El chef no necesita conocer al cliente: solo ejecuta lo que dice el ticket. Si algo sale mal, el mesero puede crear un ticket de cancelación (undo) sin conocer los detalles de la cocina.",
+    "quote": "El mesero no cocina: solo encapsula la petición en un objeto."
+  },
+  "realCases": [
+    {
+      "title": "Deshacer/Rehacer en Editores de Texto",
+      "description": "Editores como VS Code, Google Docs o Photoshop implementan undo/redo usando comandos. Cada acción (escribir, borrar, formatear) se encapsula como un objeto Command. El editor almacena un historial de comandos ejecutados y puede deshacer o rehacer cada uno invocando `undo()` o `execute()` en el objeto correspondiente."
+    },
+    {
+      "title": "Tareas en Colas / Job Scheduling",
+      "description": "Sistemas como Celery, Bull o las colas de Redis encapsulan tareas como objetos Command serializables. Cada job es un objeto con su método `execute()`, almacenado en una cola. Los workers desencolan y ejecutan los comandos de forma asíncrona, pudiendo reintentar o reprogramar tareas fallidas."
+    },
+    {
+      "title": "Historial de Acciones en UI",
+      "description": "Las aplicaciones web modernas registran cada interacción del usuario como un objeto Command. Esto permite funcionalidades como: reproducir una sesión de usuario, audit logs, o sincronizar acciones entre dispositivos. Cada click, scroll o cambio de estado es un comando serializable."
+    }
+  ],
+  "sections": {
+    "howItWorks": {
+      "title": "¿Cómo funciona Command?",
+      "description": "El patrón Command se compone de cuatro actores principales:\n\n1. **Interfaz Command**: Define el contrato que todos los comandos deben cumplir. Generalmente incluye métodos `execute()` y `undo()`.\n\n2. **Comandos Concretos**: Son las implementaciones individuales que encapsulan una petición específica. Cada uno conoce al receptor (el objeto que realiza la acción real) y ejecuta la operación en su `execute()`.\n\n3. **Invocador (Invoker)**: Es el objeto que almacena y ejecuta comandos. No necesita conocer la lógica del comando, solo llamar a `execute()`. Puede mantener un historial para deshacer/rehacer.\n\n4. **Receptor (Receiver)**: Es el objeto que realiza el trabajo real. Los comandos le delegan la ejecución. El receptor no sabe que está siendo invocado a través de un comando.\n\nLa clave está en que el invocador y el receptor están completamente desacoplados. El invocador solo conoce la interfaz Command, y el receptor solo ejecuta la lógica de negocio.",
+      "structureCode": "// === ESTRUCTURA DEL PATRÓN COMMAND ===\n\n// 1. Interfaz Command (el contrato)\ninterface Command {\n  execute(): void;\n  undo(): void;\n}\n\n// 2. Receptor (el que hace el trabajo real)\nclass TextDocument {\n  private content: string = '';\n\n  insert(text: string) { this.content += text; }\n  delete(length: number) { this.content = this.content.slice(0, -length); }\n  getContent(): string { return this.content; }\n}\n\n// 3. Comandos Concretos\nclass InsertCommand implements Command {\n  constructor(private doc: TextDocument, private text: string) {}\n  execute() { this.doc.insert(this.text); }\n  undo() { this.doc.delete(this.text.length); }\n}\n\nclass DeleteCommand implements Command {\n  constructor(private doc: TextDocument, private length: number) {}\n  execute() { this.doc.delete(this.length); }\n  undo() { /* restaurar texto borrado */ }\n}\n\n// 4. Invocador (almacena historial)\nclass Editor {\n  private history: Command[] = [];\n\n  execute(cmd: Command) {\n    cmd.execute();\n    this.history.push(cmd);\n  }\n\n  undo() {\n    const cmd = this.history.pop();\n    cmd?.undo();\n  }\n}\n\n// Uso:\nconst doc = new TextDocument();\nconst editor = new Editor();\neditor.execute(new InsertCommand(doc, 'Hola'));\neditor.execute(new InsertCommand(doc, ' Mundo'));\nconsole.log(doc.getContent()); // → 'Hola Mundo'\neditor.undo();\nconsole.log(doc.getContent()); // → 'Hola'"
+    },
+    "prosCons": {
+      "pros": [
+        "Desacopla el invocador del receptor: el emisor no necesita conocer la lógica de negocio.",
+        "Soporte para undo/redo: cada comando encapsula su inverso, facilitando historial de acciones.",
+        "Comandos serializables: podés guardar, enviar o reprogramar peticiones como objetos.",
+        "Principio Abierto/Cerrado (OCP): podés agregar nuevos comandos sin modificar el invocador.",
+        "Macros y grabación: podés grabar secuencias de comandos y reproducirlas."
+      ],
+      "cons": [
+        "Aumenta la complejidad: cada operación requiere su propia clase de comando.",
+        "Puede crear muchas clases: para cada acción del sistema, una nueva clase Command.",
+        "La gestión del estado del receptor puede ser compleja en comandos con efectos colaterales.",
+        "La serialización de comandos puede ser difícil si el receptor tiene estado complejo.",
+        "El rendimiento puede verse afectado si el historial de comandos crece mucho."
+      ]
+    },
+    "whenToUse": "Usá Command cuando necesites desacoplar el objeto que invoca una operación del que la ejecuta. Es ideal para: editores con undo/redo, sistemas de transacciones, programación de tareas diferidas, macros de acciones, logging de operaciones, y cualquier caso donde necesites registrar, deshacer o reprogramar peticiones.",
+    "whenNotToUse": "NO uses Command si la operación es simple y no necesitás undo/redo, historial o serialización. Tampoco si el sistema tiene pocas operaciones y la sobrecarga de crear una clase por cada una no justifica la flexibilidad. Si solo necesitás desacoplar una función, un callback simple puede ser más ligero."
+  },
+  "codeBefore": "class TextEditor {\n  insertText(text: string) {\n    this.document.content += text;\n  }\n  deleteText(length: number) {\n    this.document.content = this.document.content.slice(0, -length);\n  }\n}\n\n// La UI llama directamente, sin historial ni undo\neditor.insertText('Hola');\neditor.deleteText(5);",
+  "codeAfter": "// 1. Interfaz Command con undo\ninterface Command {\n  execute(): void;\n  undo(): void;\n}\n\n// 2. Comandos concretos encapsulan la lógica\nclass InsertCommand implements Command {\n  constructor(private doc: TextDocument, private text: string) {}\n  execute() { this.doc.insert(this.text); }\n  undo() { this.doc.delete(this.text.length); }\n}\n\n// 3. Invocador con historial\nclass Editor {\n  private history: Command[] = [];\n  execute(cmd: Command) { cmd.execute(); this.history.push(cmd); }\n  undo() { this.history.pop()?.undo(); }\n}",
+  "exercise": {
+    "title": "Reto de Implementación",
+    "fileName": "EditorDeTexto.ts",
+    "statement": "Implementa un editor de texto con soporte para undo/redo usando el patrón Command.",
+    "instructions": "Crea comandos para insertar texto, borrar texto y formatear texto. El editor debe mantener un historial de comandos ejecutados y permitir deshacer la última acción o rehacer una acción deshecha.",
+    "acceptanceCriteria": [
+      "Crea una interfaz `EditorCommand` con `execute()`, `undo()` y `redo()`.",
+      "Implementa `InsertCommand` y `DeleteCommand` con su lógica de inversión.",
+      "Crea un `TextEditor` invocador que almacene historial de comandos ejecutados.",
+      "Implementa `undo()` y `redo()` que naveguen el historial correctamente."
+    ],
+    "starterCode": "// TODO: Define EditorCommand interface here\n\n// TODO: Implement InsertCommand and DeleteCommand\n\n// TODO: Implement TextEditor invoker with undo/redo history\n\nconst editor = new TextEditor();\neditor.execute(new InsertCommand('Hola'));\neditor.execute(new InsertCommand(' Mundo'));\nconsole.log(editor.getContent()); // → 'Hola Mundo'\neditor.undo();\nconsole.log(editor.getContent()); // → 'Hola'\neditor.redo();\nconsole.log(editor.getContent()); // → 'Hola Mundo'"
+  }
+}

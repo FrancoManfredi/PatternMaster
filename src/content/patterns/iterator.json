@@ -1,0 +1,77 @@
+{
+  "slug": "iterator",
+  "title": "Iterator",
+  "category": "COMPORTAMIENTO",
+  "categoryLabel": "Patrón de Comportamiento",
+  "difficulty": "Fácil",
+  "difficultyLevel": 1,
+  "description": "Proporciona acceso secuencial a los elementos de una colección sin exponer su representación interna. Permite recorrer diferentes tipos de colecciones con una interfaz común.",
+  "codeTag": "BEHAVIORAL_06",
+  "theory": {
+    "problem": "El Problema del Acceso a Colecciones",
+    "problemDescription": "Imagina que tenés una colección de datos: una lista de reproducción, una lista de tareas, un grafo de dependencias. Cada colección tiene su propia estructura interna: arrays, árboles, grafos, hash maps. Si el código cliente accede directamente a la estructura interna (usando índices, punteros, nodos), queda acoplado a esa implementación específica. Agregar una nueva estructura de datos significa modificar todo el código que la recorre. El patrón Iterator sugiere extraer el comportamiento de recorrido en un objeto separado (el iterador) que expone una interfaz común: `hasNext()` y `next()`. Así, el cliente recorre cualquier colección sin conocer su estructura interna.",
+    "beforeAfter": {
+      "before": "Acceso Directo a Estructura",
+      "after": "Iterador Abstraído"
+    }
+  },
+  "analogy": {
+    "title": "La Analogía del Control Remoto",
+    "description": "Tenés un control remoto de TV. No necesitás saber cómo se almacenan los canales internamente (antena, cable, satélite, streaming). Solo usás los botones siguiente y anterior para recorrer los canales. El control remoto es el iterador: te da una interfaz simple para navegar una colección compleja sin exponer los detalles de implementación.",
+    "quote": "No necesitás saber cómo se almacenan los canales, solo usás siguiente y anterior."
+  },
+  "realCases": [
+    {
+      "title": "Symbol.iterator en JavaScript",
+      "description": "JavaScript implementa el patrón Iterator nativamente con `Symbol.iterator`. Cualquier objeto que implemente este símbolo se vuelve iterable. Los arrays, strings, Maps, Sets y objetos personalizados pueden definir su propio comportamiento de recorrido. El protocolo `for...of` y el spread operator (`[...obj]`) usan este iterador internamente."
+    },
+    {
+      "title": "Paginación en APIs",
+      "description": "Las APIs REST usan paginación para devolver grandes conjuntos de datos. Cada página es como un iterador: la respuesta incluye los datos actuales y un enlace a la siguiente página. El cliente recorre la colección completa paginando sin conocer cómo el servidor almacena los datos internamente."
+    },
+    {
+      "title": "Recorrido de Árboles y Grafos",
+      "description": "Estructuras de datos como árboles binarios, árboles de decisión o grafos de dependencias implementan iteradores personalizados (BFS, DFS, in-order, pre-order, post-order). El mismo árbol puede tener múltiples iteradores para diferentes estrategias de recorrido, todos con la misma interfaz."
+    }
+  ],
+  "sections": {
+    "howItWorks": {
+      "title": "¿Cómo funciona Iterator?",
+      "description": "El patrón Iterator se compone de tres actores principales:\n\n1. **Interfaz Iterator**: Define el contrato que todos los iteradores deben cumplir. Generalmente incluye métodos `hasNext()` (para verificar si hay más elementos) y `next()` (para obtener el siguiente).\n\n2. **Iteradores Concretos**: Son las implementaciones individuales que recorren un tipo específico de colección. Cada uno mantiene su propio estado interno (índice, puntero, cola) para rastrear la posición actual del recorrido.\n\n3. **Interfaz Aggregate (Colección)**: Define el contrato para crear iteradores. Generalmente incluye un método `createIterator()` que devuelve un iterador para esa colección.\n\nLa clave está en que el cliente usa la interfaz Iterator sin conocer la estructura interna de la colección. Podés cambiar la implementación de la colección (de array a lista enlazada) sin afectar el código cliente.",
+      "structureCode": "// === ESTRUCTURA DEL PATRÓN ITERATOR ===\n\n// 1. Interfaz Iterator (el contrato)\ninterface Iterator<T> {\n  hasNext(): boolean;\n  next(): T | null;\n}\n\n// 2. Interfaz Aggregate (la colección)\ninterface Aggregate<T> {\n  createIterator(): Iterator<T>;\n}\n\n// 3. Colección Concreta\nclass Playlist implements Aggregate<Song> {\n  private songs: Song[] = [];\n\n  add(song: Song) { this.songs.push(song); }\n  createIterator(): Iterator<Song> {\n    return new PlaylistIterator(this.songs);\n  }\n}\n\n// 4. Iterador Concreto\nclass PlaylistIterator implements Iterator<Song> {\n  private position = 0;\n\n  constructor(private songs: Song[]) {}\n\n  hasNext(): boolean {\n    return this.position < this.songs.length;\n  }\n\n  next(): Song | null {\n    if (this.hasNext()) {\n      return this.songs[this.position++];\n    }\n    return null;\n  }\n}\n\n// Uso:\nconst playlist = new Playlist();\nplaylist.add(new Song('Bohemian Rhapsody'));\nplaylist.add(new Song('Stairway to Heaven'));\n\nconst iterator = playlist.createIterator();\nwhile (iterator.hasNext()) {\n  console.log(iterator.next()?.title);\n}"
+    },
+    "prosCons": {
+      "pros": [
+        "Principio de Responsabilidad Única: el recorrido se separa de la estructura de datos.",
+        "Flexibilidad: podés tener múltiples estrategias de recorrido para la misma colección.",
+        "Encapsulación: el cliente no necesita conocer la estructura interna de la colección.",
+        "Reutilización: el mismo iterador puede usarse con diferentes colecciones del mismo tipo.",
+        "Soporte para colecciones infinitas: podés crear iteradores que generen valores bajo demanda (lazy evaluation)."
+      ],
+      "cons": [
+        "Puede ser overkill para colecciones simples: si tenés un array, un `for` básico alcanza.",
+        "Complejidad adicional: cada tipo de colección necesita su propio iterador.",
+        "Rendimiento: el acceso por índice directo puede ser más rápido que usar un iterador.",
+        "Dificultad con recorridos paralelos: un solo iterador por colección puede limitar el paralelismo.",
+        "Estado mutable: el iterador mantiene estado interno, lo que puede causar bugs si se usa concurrentemente."
+      ]
+    },
+    "whenToUse": "Usá Iterator cuando necesites recorrer una colección sin exponer su estructura interna. Es ideal para: colecciones con estructura compleja (árboles, grafos), múltiples estrategias de recorrido (BFS, DFS, aleatorio), colecciones que cambian de implementación, colecciones infinitas o lazy, y cuando querés desacoplar el recorrido de la colección.",
+    "whenNotToUse": "NO uses Iterator si tu colección es un array simple y solo necesitás un recorrido secuencial básico. Un `for...of` o `forEach` es más directo. Tampoco si la performance del acceso directo por índice es crítica y el overhead del iterador no se justifica. Para colecciones inmutables y pequeñas, el iterador agrega complejidad innecesaria."
+  },
+  "codeBefore": "// Acceso directo a la estructura interna\nfunction printSongs(songs: Song[]) {\n  for (let i = 0; i < songs.length; i++) {\n    console.log(songs[i].title);\n  }\n}\n\n// Si cambiamos a una lista enlazada, TODO el código se rompe\nfunction printLinkedList(node: LinkedListNode<Song>) {\n  while (node !== null) {\n    console.log(node.data.title);\n    node = node.next;\n  }\n}",
+  "codeAfter": "// 1. Interfaz Iterator común\ninterface Iterator<T> {\n  hasNext(): boolean;\n  next(): T | null;\n}\n\n// 2. Iterador concreto para la colección\nclass PlaylistIterator implements Iterator<Song> {\n  private position = 0;\n  constructor(private songs: Song[]) {}\n  hasNext() { return this.position < this.songs.length; }\n  next() { return this.songs[this.position++] ?? null; }\n}\n\n// 3. El cliente usa la interfaz sin conocer la estructura\nfunction printSongs(iterator: Iterator<Song>) {\n  while (iterator.hasNext()) {\n    console.log(iterator.next()?.title);\n  }\n}",
+  "exercise": {
+    "title": "Reto de Implementación",
+    "fileName": "ReproductorPlaylist.ts",
+    "statement": "Implementa un reproductor de playlist con iteradores secuencial y aleatorio usando el patrón Iterator.",
+    "instructions": "Crea una clase `Playlist` que contenga canciones y pueda crear dos tipos de iteradores: uno secuencial (recorre en orden) y uno aleatorio (mezcla las canciones). El cliente debe poder usar ambos iteradores con la misma interfaz.",
+    "acceptanceCriteria": [
+      "Crea una interfaz `SongIterator` con `hasNext()` y `next()`.",
+      "Implementa `SequentialIterator` que recorra las canciones en orden.",
+      "Implementa `ShuffleIterator` que recorra las canciones en orden aleatorio.",
+      "Crea la clase `Playlist` que implemente `createIterator()` y `createShuffleIterator()`."
+    ],
+    "starterCode": "// TODO: Define SongIterator interface here\n\n// TODO: Implement SequentialIterator\n\n// TODO: Implement ShuffleIterator (randomize song order)\n\n// TODO: Implement Playlist class with iterator creation\n\nconst playlist = new Playlist();\nplaylist.add(new Song('Bohemian Rhapsody', 'Queen'));\nplaylist.add(new Song('Stairway to Heaven', 'Led Zeppelin'));\nplaylist.add(new Song('Hotel California', 'Eagles'));\n\nconst seq = playlist.createIterator();\nwhile (seq.hasNext()) console.log(seq.next()?.title);\n\nconst shuffle = playlist.createShuffleIterator();\nwhile (shuffle.hasNext()) console.log(shuffle.next()?.title);"
+  }
+}
