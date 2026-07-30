@@ -41,7 +41,6 @@ export const adapterTestDef: PatternTestDef = {
       label: "StripeAPI y PayPalAPI existen con sus métodos nativos. PaymentProvider existe con pay() y refund().",
       requiredExports: ["StripeAPI", "PayPalAPI", "PaymentProvider"],
       check: `
-        console.log("[EVAL-TESTDEF-0] Verificando APIs externas y PaymentProvider...");
         // StripeAPI must have charge()
         var stripe = new exports.StripeAPI();
         assert(typeof stripe.charge === 'function', "StripeAPI no tiene método charge()");
@@ -55,7 +54,6 @@ export const adapterTestDef: PatternTestDef = {
         assert(typeof provider.pay === 'function', "PaymentProvider no tiene método pay()");
         assert(typeof provider.refund === 'function', "PaymentProvider no tiene método refund()");
 
-        console.log("[EVAL-TESTDEF-0] APIs externas y PaymentProvider verificados");
         true
       `,
       failureMessage:
@@ -66,7 +64,6 @@ export const adapterTestDef: PatternTestDef = {
       label: "StripeAdapter extiende PaymentProvider y traduce charge() a pay()",
       requiredExports: ["StripeAdapter", "StripeAPI", "PaymentProvider"],
       check: `
-        console.log("[EVAL-TESTDEF-1] Verificando StripeAdapter...");
         // StripeAdapter must extend PaymentProvider
         assert(
           exports.StripeAdapter.prototype instanceof exports.PaymentProvider,
@@ -83,7 +80,6 @@ export const adapterTestDef: PatternTestDef = {
         assert(typeof result.id === 'string' && result.id.length > 0, "pay() no devuelve un id válido");
         assert(typeof result.status === 'string' && result.status.length > 0, "pay() no devuelve un status válido");
 
-        console.log("[EVAL-TESTDEF-1] StripeAdapter verificado correctamente");
         true
       `,
       failureMessage:
@@ -94,7 +90,6 @@ export const adapterTestDef: PatternTestDef = {
       label: "PayPalAdapter extiende PaymentProvider y traduce processPayment() a pay()",
       requiredExports: ["PayPalAdapter", "PayPalAPI", "PaymentProvider"],
       check: `
-        console.log("[EVAL-TESTDEF-2] Verificando PayPalAdapter...");
         // PayPalAdapter must extend PaymentProvider
         assert(
           exports.PayPalAdapter.prototype instanceof exports.PaymentProvider,
@@ -111,7 +106,6 @@ export const adapterTestDef: PatternTestDef = {
         assert(typeof result.id === 'string' && result.id.length > 0, "pay() no devuelve un id válido");
         assert(typeof result.status === 'string' && result.status.length > 0, "pay() no devuelve un status válido");
 
-        console.log("[EVAL-TESTDEF-2] PayPalAdapter verificado correctamente");
         true
       `,
       failureMessage:
@@ -122,7 +116,6 @@ export const adapterTestDef: PatternTestDef = {
       label: "checkout() funciona con cualquier PaymentProvider",
       requiredExports: ["checkout", "StripeAdapter", "PayPalAdapter", "StripeAPI", "PayPalAPI"],
       check: `
-        console.log("[EVAL-TESTDEF-3] Verificando checkout() polimórfico...");
         assert(typeof exports.checkout === 'function', "checkout no es una función");
 
         // checkout with StripeAdapter
@@ -141,7 +134,6 @@ export const adapterTestDef: PatternTestDef = {
         assert(typeof paypalResult.id === 'string' && paypalResult.id.length > 0, "checkout() con PayPalAdapter no devuelve id válido");
         assert(typeof paypalResult.status === 'string' && paypalResult.status.length > 0, "checkout() con PayPalAdapter no devuelve status válido");
 
-        console.log("[EVAL-TESTDEF-3] checkout() funciona polimórficamente");
         true
       `,
       failureMessage:

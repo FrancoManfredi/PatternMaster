@@ -38,15 +38,11 @@ export const templateMethodTestDef: PatternTestDef = {
       label: "Define la clase base ReportGenerator con un template method generate()",
       requiredExports: ["ReportGenerator"],
       check: `
-        console.log("[EVAL-TESTDEF-0] requiredExports:", ["ReportGenerator"]);
-        console.log("[EVAL-TESTDEF-0] ReportGenerator exportada:", exports.ReportGenerator);
         assert(typeof exports.ReportGenerator === 'function', "ReportGenerator no es una clase/función");
         var instance = new exports.ReportGenerator();
-        console.log("[EVAL-TESTDEF-0] instance:", instance);
         assert(typeof instance.generate === 'function', "ReportGenerator no tiene método generate()");
         // generate() should return a string (the base implementation produces output)
         var result = instance.generate();
-        console.log("[EVAL-TESTDEF-0] generate() returned:", result);
         assert(typeof result === 'string', "generate() debería retornar un string");
         assert(result.length > 0, "generate() debería retornar un string no vacío");
         true
@@ -83,7 +79,6 @@ export const templateMethodTestDef: PatternTestDef = {
 
         var tracked = new TrackedReport();
         tracked.generate();
-        console.log("[EVAL-TESTDEF-1] callOrder:", callOrder);
 
         assert(callOrder.length === 4, "generate() debería invocar exactamente 4 pasos, se invocaron " + callOrder.length);
         assert(callOrder[0] === 'getData', "Paso 1 debería ser getData, fue " + callOrder[0]);
@@ -105,7 +100,6 @@ export const templateMethodTestDef: PatternTestDef = {
         assert(pdf instanceof exports.ReportGenerator, "PDFReport no extiende ReportGenerator");
         assert(typeof pdf.generate === 'function', "PDFReport no tiene método generate()");
         var result = pdf.generate();
-        console.log("[EVAL-TESTDEF-2] PDF generate():", result);
         assert(typeof result === 'string' && result.length > 0, "PDFReport.generate() debería retornar string no vacío");
         // PDF-specific: output should contain PDF marker or uppercase data
         assert(result.toUpperCase().indexOf('PDF') !== -1 || result.indexOf('[PDF]') !== -1, "La salida de PDFReport debería contener un marcador PDF");
@@ -124,7 +118,6 @@ export const templateMethodTestDef: PatternTestDef = {
         assert(html instanceof exports.ReportGenerator, "HTMLReport no extiende ReportGenerator");
         assert(typeof html.generate === 'function', "HTMLReport no tiene método generate()");
         var result = html.generate();
-        console.log("[EVAL-TESTDEF-3] HTML generate():", result);
         assert(typeof result === 'string' && result.length > 0, "HTMLReport.generate() debería retornar string no vacío");
         // HTML-specific: output should contain HTML tags
         assert(result.indexOf('<') !== -1 && result.indexOf('>') !== -1, "La salida de HTMLReport debería contener tags HTML");
@@ -143,7 +136,6 @@ export const templateMethodTestDef: PatternTestDef = {
         assert(csv instanceof exports.ReportGenerator, "CSVReport no extiende ReportGenerator");
         assert(typeof csv.generate === 'function', "CSVReport no tiene método generate()");
         var result = csv.generate();
-        console.log("[EVAL-TESTDEF-4] CSV generate():", result);
         assert(typeof result === 'string' && result.length > 0, "CSVReport.generate() debería retornar string no vacío");
         // CSV-specific: output should contain newlines (CSV rows) or header pattern
         assert(result.indexOf('\\n') !== -1, "La salida de CSVReport debería contener saltos de línea (formato CSV)");

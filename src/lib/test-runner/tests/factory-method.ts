@@ -45,21 +45,15 @@ export const factoryMethodTestDef: PatternTestDef = {
       label: "Crea una interfaz Notification con un método send()",
       requiredExports: ["Notification"],
       check: `
-        console.log("[EVAL-TESTDEF-0] requiredExports:", ["Notification"]);
-        console.log("[EVAL-TESTDEF-0] Notification exportada:", exports.Notification);
         // Notification should be a class/function with a 'send' method prototype
         var proto = exports.Notification.prototype || exports.Notification;
-        console.log("[EVAL-TESTDEF-0] proto.send type:", typeof proto.send);
-        console.log("[EVAL-TESTDEF-0] proto.send toString:", proto.send ? String(proto.send) : "N/A");
         assert(typeof proto.send === 'function', "send() no es una función");
         // Verify send is callable — wrap in try-catch to tolerate "abstract throws" pattern
         var instance = new exports.Notification();
-        console.log("[EVAL-TESTDEF-0] instance creada, llamando send...");
         try {
           instance.send("test");
-          console.log("[EVAL-TESTDEF-0] send() ejecutó SIN error");
         } catch(sendErr) {
-          console.log("[EVAL-TESTDEF-0] send() lanzó error (válido si es clase base):", sendErr.message);
+          // base class may throw — that's acceptable
         }
         true
       `,

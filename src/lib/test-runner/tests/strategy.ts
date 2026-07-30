@@ -44,20 +44,15 @@ export const strategyTestDef: PatternTestDef = {
       label: "Define la clase base TaxStrategy con un método calculate(amount)",
       requiredExports: ["TaxStrategy"],
       check: `
-        console.log("[EVAL-TESTDEF-0] requiredExports:", ["TaxStrategy"]);
-        console.log("[EVAL-TESTDEF-0] TaxStrategy exportada:", exports.TaxStrategy);
         // TaxStrategy should be a class/function with a 'calculate' method on its prototype
         var proto = exports.TaxStrategy.prototype || exports.TaxStrategy;
-        console.log("[EVAL-TESTDEF-0] proto.calculate type:", typeof proto.calculate);
         assert(typeof proto.calculate === 'function', "calculate() no es una función");
         // Verify calculate is callable — tolerate a base class that returns 0 or throws
         var instance = new exports.TaxStrategy();
-        console.log("[EVAL-TESTDEF-0] instance creada, llamando calculate...");
         try {
           var baseResult = instance.calculate(100);
-          console.log("[EVAL-TESTDEF-0] calculate(100) =", baseResult, "(sin lanzar)");
         } catch(calcErr) {
-          console.log("[EVAL-TESTDEF-0] calculate() lanzó (válido si clase base abstracta):", calcErr.message);
+          // base class may throw — that's acceptable
         }
         true
       `,
@@ -69,13 +64,11 @@ export const strategyTestDef: PatternTestDef = {
       label: "Implementa SpainTaxStrategy (21%) que extiende TaxStrategy",
       requiredExports: ["SpainTaxStrategy", "TaxStrategy"],
       check: `
-        console.log("[EVAL-TESTDEF-1] SpainTaxStrategy:", exports.SpainTaxStrategy);
         assert(typeof exports.SpainTaxStrategy === 'function', "SpainTaxStrategy no es una clase/función");
         assert(exports.SpainTaxStrategy.prototype instanceof exports.TaxStrategy, "SpainTaxStrategy no extiende TaxStrategy");
         var spain = new exports.SpainTaxStrategy();
         assert(typeof spain.calculate === 'function', "SpainTaxStrategy no tiene método calculate()");
         var taxEs = spain.calculate(100);
-        console.log("[EVAL-TESTDEF-1] calculate(100) =", taxEs, "(esperado 21)");
         assert(Math.abs(taxEs - 21) < 0.01, "SpainTaxStrategy.calculate(100) debería devolver 21");
         true
       `,
@@ -87,13 +80,11 @@ export const strategyTestDef: PatternTestDef = {
       label: "Implementa USTaxStrategy (7%) que extiende TaxStrategy",
       requiredExports: ["USTaxStrategy", "TaxStrategy"],
       check: `
-        console.log("[EVAL-TESTDEF-2] USTaxStrategy:", exports.USTaxStrategy);
         assert(typeof exports.USTaxStrategy === 'function', "USTaxStrategy no es una clase/función");
         assert(exports.USTaxStrategy.prototype instanceof exports.TaxStrategy, "USTaxStrategy no extiende TaxStrategy");
         var us = new exports.USTaxStrategy();
         assert(typeof us.calculate === 'function', "USTaxStrategy no tiene método calculate()");
         var taxUs = us.calculate(100);
-        console.log("[EVAL-TESTDEF-2] calculate(100) =", taxUs, "(esperado 7)");
         assert(Math.abs(taxUs - 7) < 0.01, "USTaxStrategy.calculate(100) debería devolver 7");
         true
       `,
@@ -105,18 +96,15 @@ export const strategyTestDef: PatternTestDef = {
       label: "Modifica Order para aceptar una estrategia por constructor y delegar el cálculo",
       requiredExports: ["Order", "SpainTaxStrategy", "USTaxStrategy"],
       check: `
-        console.log("[EVAL-TESTDEF-3] Order:", exports.Order);
         assert(typeof exports.Order === 'function', "Order no es una clase/función");
         // Order receives a strategy by constructor and delegates calculateTotal to it
         var spainOrder = new exports.Order(new exports.SpainTaxStrategy());
         assert(typeof spainOrder.calculateTotal === 'function', "Order no tiene método calculateTotal()");
         var totalEs = spainOrder.calculateTotal(100);
-        console.log("[EVAL-TESTDEF-3] calculateTotal(100) con Spain =", totalEs, "(esperado 121 = 100 + 21)");
         assert(Math.abs(totalEs - 121) < 0.01, "Order con SpainTaxStrategy debería devolver 121 (100 + 21)");
         // Verify the delegation also works with another strategy (intercambio en runtime)
         var usOrder = new exports.Order(new exports.USTaxStrategy());
         var totalUs = usOrder.calculateTotal(100);
-        console.log("[EVAL-TESTDEF-3] calculateTotal(100) con US =", totalUs, "(esperado 107 = 100 + 7)");
         assert(Math.abs(totalUs - 107) < 0.01, "Order con USTaxStrategy debería devolver 107 (100 + 7)");
         true
       `,

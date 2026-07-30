@@ -35,12 +35,9 @@ export const builderTestDef: PatternTestDef = {
       label: "Computer y ComputerBuilder existen con métodos encadenables",
       requiredExports: ["Computer", "ComputerBuilder"],
       check: `
-        console.log("[EVAL-TESTDEF-0] requiredExports:", ["Computer", "ComputerBuilder"]);
-
         // Computer should be a class
         assert(typeof exports.Computer === 'function', "Computer no es una clase/función");
         var pc = new exports.Computer();
-        console.log("[EVAL-TESTDEF-0] Computer instance:", pc);
         assert('cpu' in pc, "Computer no tiene propiedad cpu");
         assert('gpu' in pc, "Computer no tiene propiedad gpu");
         assert('ram' in pc, "Computer no tiene propiedad ram");
@@ -69,7 +66,6 @@ export const builderTestDef: PatternTestDef = {
         var built = builder.build();
         assert(built instanceof exports.Computer, "build() no retorna una instancia de Computer");
 
-        console.log("[EVAL-TESTDEF-0] Chainable setters verified");
         true
       `,
       failureMessage:
@@ -80,7 +76,6 @@ export const builderTestDef: PatternTestDef = {
       label: "GamingComputerBuilder construye specs de alto rendimiento",
       requiredExports: ["GamingComputerBuilder", "ComputerBuilder", "Computer"],
       check: `
-        console.log("[EVAL-TESTDEF-1] Testing GamingComputerBuilder");
         assert(typeof exports.GamingComputerBuilder === 'function', "GamingComputerBuilder no es una clase/función");
 
         var builder = new exports.GamingComputerBuilder();
@@ -89,14 +84,11 @@ export const builderTestDef: PatternTestDef = {
         var pc = builder.build();
         assert(pc instanceof exports.Computer, "build() no retorna Computer");
 
-        console.log("[EVAL-TESTDEF-1] Gaming PC specs - cpu:", pc.cpu, "gpu:", pc.gpu, "ram:", pc.ram, "storage:", pc.storage);
-
         assert(pc.cpu.includes('i9'), "CPU debe incluir 'i9' (alto rendimiento), got: " + pc.cpu);
         assert(pc.gpu.includes('RTX'), "GPU debe incluir 'RTX' (dedicada), got: " + pc.gpu);
         assert(pc.ram.includes('32GB'), "RAM debe incluir '32GB', got: " + pc.ram);
         assert(pc.storage.includes('NVMe'), "Storage debe incluir 'NVMe', got: " + pc.storage);
 
-        console.log("[EVAL-TESTDEF-1] GamingComputerBuilder OK");
         true
       `,
       failureMessage:
@@ -107,7 +99,6 @@ export const builderTestDef: PatternTestDef = {
       label: "OfficeComputerBuilder construye specs básicas",
       requiredExports: ["OfficeComputerBuilder", "ComputerBuilder", "Computer"],
       check: `
-        console.log("[EVAL-TESTDEF-2] Testing OfficeComputerBuilder");
         assert(typeof exports.OfficeComputerBuilder === 'function', "OfficeComputerBuilder no es una clase/función");
 
         var builder = new exports.OfficeComputerBuilder();
@@ -116,14 +107,11 @@ export const builderTestDef: PatternTestDef = {
         var pc = builder.build();
         assert(pc instanceof exports.Computer, "build() no retorna Computer");
 
-        console.log("[EVAL-TESTDEF-2] Office PC specs - cpu:", pc.cpu, "gpu:", pc.gpu, "ram:", pc.ram, "storage:", pc.storage);
-
         assert(pc.cpu.includes('i5'), "CPU debe incluir 'i5' (básico), got: " + pc.cpu);
         assert(pc.gpu.includes('UHD'), "GPU debe incluir 'UHD' (integrada), got: " + pc.gpu);
         assert(pc.ram.includes('8GB'), "RAM debe incluir '8GB', got: " + pc.ram);
         assert(pc.storage.includes('SATA'), "Storage debe incluir 'SATA', got: " + pc.storage);
 
-        console.log("[EVAL-TESTDEF-2] OfficeComputerBuilder OK");
         true
       `,
       failureMessage:
@@ -134,7 +122,6 @@ export const builderTestDef: PatternTestDef = {
       label: "ComputerDirector produce PCs correctas con ambos builders",
       requiredExports: ["ComputerDirector", "GamingComputerBuilder", "OfficeComputerBuilder", "Computer"],
       check: `
-        console.log("[EVAL-TESTDEF-3] Testing ComputerDirector");
         assert(typeof exports.ComputerDirector === 'function', "ComputerDirector no es una clase/función");
         assert(typeof exports.ComputerDirector.buildGamingPC === 'function', "ComputerDirector no tiene buildGamingPC()");
         assert(typeof exports.ComputerDirector.buildOfficePC === 'function', "ComputerDirector no tiene buildOfficePC()");
@@ -145,7 +132,6 @@ export const builderTestDef: PatternTestDef = {
         assert(gamingPC instanceof exports.Computer, "buildGamingPC() no retorna Computer");
         assert(gamingPC.cpu.includes('i9'), "Gaming PC CPU incorrecta");
         assert(gamingPC.gpu.includes('RTX'), "Gaming PC GPU incorrecta");
-        console.log("[EVAL-TESTDEF-3] buildGamingPC OK");
 
         // buildOfficePC with OfficeComputerBuilder
         var officeBuilder = new exports.OfficeComputerBuilder();
@@ -153,9 +139,7 @@ export const builderTestDef: PatternTestDef = {
         assert(officePC instanceof exports.Computer, "buildOfficePC() no retorna Computer");
         assert(officePC.cpu.includes('i5'), "Office PC CPU incorrecta");
         assert(officePC.gpu.includes('UHD'), "Office PC GPU incorrecta");
-        console.log("[EVAL-TESTDEF-3] buildOfficePC OK");
 
-        console.log("[EVAL-TESTDEF-3] ComputerDirector OK");
         true
       `,
       failureMessage:
