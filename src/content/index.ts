@@ -56,7 +56,7 @@ export interface PatternContent {
     instructions: string;
     acceptanceCriteria: string[];
     starterCode: string;
-    starterCodeJS: string;
+    starterCodeJS?: string;
   };
 }
 

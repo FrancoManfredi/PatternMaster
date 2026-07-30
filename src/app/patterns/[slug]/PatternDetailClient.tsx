@@ -7,6 +7,12 @@ import ExerciseSection from "@/components/patterns/ExerciseSection";
 import { highlightCode, renderBoldText } from "@/lib/syntax-highlight";
 import type { PatternContent } from "@/content";
 
+const CATEGORY_DISPLAY: Record<string, { icon: string; label: string }> = {
+  CREACIONAL: { icon: "factory", label: "CREATIONAL" },
+  COMPORTAMIENTO: { icon: "route", label: "BEHAVIORAL" },
+  ESTRUCTURAL: { icon: "account_tree", label: "STRUCTURAL" },
+};
+
 interface PatternDetailClientProps {
   pattern: PatternContent;
 }
@@ -46,15 +52,6 @@ export default function PatternDetailClient({
               <p className="font-body text-body-lg text-on-surface-variant max-w-2xl leading-relaxed">
                 {pattern.description}
               </p>
-
-              <div className="flex items-center gap-4 mt-4">
-                <button className="px-6 py-3 bg-surface-container border border-outline-variant/30 text-on-surface font-body text-code-sm uppercase tracking-wider hover:bg-surface-container-high transition-colors flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[18px]">
-                    bookmark
-                  </span>
-                  Guardar patrón
-                </button>
-              </div>
             </div>
 
             {/* Right: 3D Logo Box */}
@@ -145,9 +142,7 @@ export default function PatternDetailClient({
               <div className="h-48 w-full bg-cover bg-center bg-surface-container-high">
                 <div className="w-full h-full flex items-center justify-center">
                   <span className="material-symbols-outlined text-primary/30 text-[80px]">
-                    {pattern.category === "CREACIONAL"
-                      ? "factory"
-                      : "route"}
+                    {CATEGORY_DISPLAY[pattern.category]?.icon ?? "factory"}
                   </span>
                 </div>
               </div>
@@ -209,7 +204,7 @@ export default function PatternDetailClient({
                 </span>
               </div>
               <span className="font-body text-[10px] text-on-surface-variant/40 uppercase tracking-widest">
-                {pattern.category === "CREACIONAL" ? "CREATIONAL" : "BEHAVIORAL"}
+                {CATEGORY_DISPLAY[pattern.category]?.label ?? "CREATIONAL"}
               </span>
             </div>
 
