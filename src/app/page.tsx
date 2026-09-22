@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -10,6 +11,14 @@ import { useProgress } from "@/components/ProgressContext";
 export default function HomePage() {
   const patterns = getAllPatterns();
   const { getProgress } = useProgress();
+  // getProgress() reads localStorage synchronously: on the server it always
+  // returns 0 (no window), but on first client render it would return the
+  // stored value (e.g. 100) -> hydration mismatch. Hold the SSR value (0)
+  // through first client render, then re-render with real values post-mount.
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   return (
     <div className="relative z-10 min-h-screen">
@@ -62,7 +71,7 @@ export default function HomePage() {
               <span className="material-symbols-outlined text-[20px] group-hover:rotate-12 transition-transform">
                 terminal
               </span>
-              Iniciar Sesión
+              Empezar Ahora
             </Link>
             <Link
               href="/catalogo"
@@ -163,7 +172,7 @@ export default function HomePage() {
               <PatternCard
                 key={pattern.slug}
                 pattern={pattern}
-                progress={getProgress(pattern.slug)}
+                progress={isMounted ? getProgress(pattern.slug) : 0}
               />
             ))}
           </div>

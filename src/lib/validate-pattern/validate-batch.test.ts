@@ -243,6 +243,147 @@ export class CSVReport extends ReportGenerator {
   protected exportReport(formatted: string): string { return 'CSV exported: ' + formatted; }
 }
 `,
+  "abstract-factory": `
+export class Chair { render(): string { return ''; } getStyle(): string { return ''; } }
+export class Table { render(): string { return ''; } getStyle(): string { return ''; } }
+export class Sofa { render(): string { return ''; } getStyle(): string { return ''; } }
+export class VictorianChair extends Chair { render(): string { return 'Victorian Chair'; } getStyle(): string { return 'Victorian'; } }
+export class VictorianTable extends Table { render(): string { return 'Victorian Table'; } getStyle(): string { return 'Victorian'; } }
+export class VictorianSofa extends Sofa { render(): string { return 'Victorian Sofa'; } getStyle(): string { return 'Victorian'; } }
+export class ModernChair extends Chair { render(): string { return 'Modern Chair'; } getStyle(): string { return 'Modern'; } }
+export class ModernTable extends Table { render(): string { return 'Modern Table'; } getStyle(): string { return 'Modern'; } }
+export class ModernSofa extends Sofa { render(): string { return 'Modern Sofa'; } getStyle(): string { return 'Modern'; } }
+export class ArtDecoChair extends Chair { render(): string { return 'ArtDeco Chair'; } getStyle(): string { return 'ArtDeco'; } }
+export class ArtDecoTable extends Table { render(): string { return 'ArtDeco Table'; } getStyle(): string { return 'ArtDeco'; } }
+export class ArtDecoSofa extends Sofa { render(): string { return 'ArtDeco Sofa'; } getStyle(): string { return 'ArtDeco'; } }
+export class FurnitureFactory {
+  createChair(): Chair { return new Chair(); }
+  createTable(): Table { return new Table(); }
+  createSofa(): Sofa { return new Sofa(); }
+}
+export class VictorianFactory extends FurnitureFactory {
+  createChair(): Chair { return new VictorianChair(); }
+  createTable(): Table { return new VictorianTable(); }
+  createSofa(): Sofa { return new VictorianSofa(); }
+}
+export class ModernFactory extends FurnitureFactory {
+  createChair(): Chair { return new ModernChair(); }
+  createTable(): Table { return new ModernTable(); }
+  createSofa(): Sofa { return new ModernSofa(); }
+}
+export class ArtDecoFactory extends FurnitureFactory {
+  createChair(): Chair { return new ArtDecoChair(); }
+  createTable(): Table { return new ArtDecoTable(); }
+  createSofa(): Sofa { return new ArtDecoSofa(); }
+}
+export function furnishRoom(factory: FurnitureFactory): string {
+  const chair = factory.createChair(); const table = factory.createTable(); const sofa = factory.createSofa();
+  return chair.getStyle() + ' ' + table.getStyle() + ' ' + sofa.getStyle();
+}
+`,
+  "facade": `
+export class Amplifier { private _on: boolean = false; on(): void { this._on = true; } off(): void { this._on = false; } setVolume(v: number): void {} isOn(): boolean { return this._on; } }
+export class Projector { private _on: boolean = false; on(): void { this._on = true; } off(): void { this._on = false; } setInput(s: string): void {} setWideScreen(): void {} isOn(): boolean { return this._on; } }
+export class Screen { private _down: boolean = false; up(): void { this._down = false; } down(): void { this._down = true; } isDown(): boolean { return this._down; } }
+export class SoundSystem { private _on: boolean = false; on(): void { this._on = true; } off(): void { this._on = false; } setSurround(): void {} isOn(): boolean { return this._on; } }
+export class HomeTheaterFacade {
+  private amp = new Amplifier(); private proj = new Projector();
+  private screen = new Screen(); private sound = new SoundSystem();
+  watchMovie(movie: string): void { this.amp.on(); this.amp.setVolume(5); this.proj.on(); this.proj.setInput('HDMI'); this.proj.setWideScreen(); this.screen.down(); this.sound.on(); this.sound.setSurround(); }
+  endMovie(): void { this.sound.off(); this.screen.up(); this.proj.off(); this.amp.off(); }
+}
+`,
+  "command": `
+export class EditorCommand {
+  execute(editor: any): void {}
+  undo(editor: any): void {}
+}
+export class InsertCommand extends EditorCommand {
+  private text: string; private pos: number;
+  constructor(pos: number, text: string) { super(); this.pos = pos; this.text = text; }
+  execute(editor: any): void {
+    editor._content = editor._content.slice(0, this.pos) + this.text + editor._content.slice(this.pos);
+  }
+  undo(editor: any): void {
+    editor._content = editor._content.slice(0, this.pos) + editor._content.slice(this.pos + this.text.length);
+  }
+}
+export class DeleteCommand extends EditorCommand {
+  private pos: number; private length: number; private deleted: string = '';
+  constructor(pos: number, length: number) { super(); this.pos = pos; this.length = length; }
+  execute(editor: any): void {
+    this.deleted = editor._content.slice(this.pos, this.pos + this.length);
+    editor._content = editor._content.slice(0, this.pos) + editor._content.slice(this.pos + this.length);
+  }
+  undo(editor: any): void {
+    editor._content = editor._content.slice(0, this.pos) + this.deleted + editor._content.slice(this.pos);
+  }
+}
+export class TextEditor {
+  _content: string = '';
+  private history: EditorCommand[] = [];
+  private redoStack: EditorCommand[] = [];
+  execute(cmd: EditorCommand): void { cmd.execute(this); this.history.push(cmd); this.redoStack = []; }
+  undo(): void { const cmd = this.history.pop(); if (cmd) { cmd.undo(this); this.redoStack.push(cmd); } }
+  redo(): void { const cmd = this.redoStack.pop(); if (cmd) { cmd.execute(this); this.history.push(cmd); } }
+  getContent(): string { return this._content; }
+}
+`,
+  "observer": `
+export class StockObserver {
+  update(stock: string, price: number): void {}
+}
+export class StockTicker {
+  private observers: StockObserver[] = [];
+  private stocks: Record<string, number> = {};
+  subscribe(obs: StockObserver): void { this.observers.push(obs); }
+  unsubscribe(obs: StockObserver): void { this.observers = this.observers.filter(o => o !== obs); }
+  setPrice(stock: string, price: number): void { this.stocks[stock] = price; this.notify(stock, price); }
+  private notify(stock: string, price: number): void { for (const o of this.observers) { o.update(stock, price); } }
+  getObservers(): StockObserver[] { return [...this.observers]; }
+}
+export class Buyer extends StockObserver {
+  private threshold: number;
+  lastAction: string = '';
+  constructor(threshold: number) { super(); this.threshold = threshold; }
+  update(stock: string, price: number): void { if (price <= this.threshold) { this.lastAction = 'buying'; } }
+}
+export class Seller extends StockObserver {
+  private threshold: number;
+  lastAction: string = '';
+  constructor(threshold: number) { super(); this.threshold = threshold; }
+  update(stock: string, price: number): void { if (price >= this.threshold) { this.lastAction = 'selling'; } }
+}
+`,
+  "state": `
+export class DocumentState {
+  submitForReview(doc: any): string { return 'Action not allowed in current state'; }
+  approve(doc: any): string { return 'Action not allowed in current state'; }
+  reject(doc: any): string { return 'Action not allowed in current state'; }
+  archive(doc: any): string { return 'Archived'; }
+}
+export class DraftState extends DocumentState {
+  submitForReview(doc: any): string { doc.setState(new ReviewState()); return 'Document submitted for review'; }
+}
+export class ReviewState extends DocumentState {
+  approve(doc: any): string { doc.setState(new PublishedState()); return 'Document approved and published'; }
+  reject(doc: any): string { doc.setState(new DraftState()); return 'Document rejected, back to draft'; }
+}
+export class PublishedState extends DocumentState {
+  approve(doc: any): string { return 'Document is already published'; }
+  reject(doc: any): string { return 'Cannot reject a published document'; }
+}
+export class Document {
+  private state: DocumentState;
+  constructor(title: string) { this.state = new DraftState(); }
+  setState(state: DocumentState): void { this.state = state; }
+  getStateName(): string { return this.state.constructor.name; }
+  submitForReview(): string { return this.state.submitForReview(this); }
+  approve(): string { return this.state.approve(this); }
+  reject(): string { return this.state.reject(this); }
+  archive(): string { return this.state.archive(this); }
+}
+`,
 };
 
 // ─── Batch 1 patterns ─────────────────────────────────────────────
@@ -250,9 +391,16 @@ export class CSVReport extends ReportGenerator {
 interface BatchPattern {
   slug: string;
   solutionSource: string;
+  /** Optional: if set, reads solution from disk instead of using solutionSource */
+  solutionPath?: string;
   loadTestDef: () => Promise<PatternTestDef>;
   loadGuided: () => Promise<GuidedExercise>;
   loadContent: () => Promise<PatternContent>;
+}
+
+function readSolution(path: string): string {
+  const fs = require("fs");
+  return fs.readFileSync(path, "utf-8");
 }
 
 const BATCH_1: BatchPattern[] = [
@@ -312,6 +460,45 @@ const BATCH_1: BatchPattern[] = [
     loadGuided: async () => (await import("@/content/guided/template-method")).templateMethodGuided,
     loadContent: async () => (await import("@/content/patterns/template-method.json")) as unknown as PatternContent,
   },
+  {
+    slug: "abstract-factory",
+    solutionSource: SOLUTIONS["abstract-factory"],
+    loadTestDef: async () => (await import("@/lib/test-runner/tests/abstract-factory")).abstractFactoryTestDef,
+    loadGuided: async () => (await import("@/content/guided/abstract-factory")).abstractFactoryGuided,
+    loadContent: async () => (await import("@/content/patterns/abstract-factory.json")) as unknown as PatternContent,
+  },
+  {
+    slug: "facade",
+    solutionSource: SOLUTIONS["facade"],
+    solutionPath: "src/content/patterns/__solutions__/facade.ts",
+    loadTestDef: async () => (await import("@/lib/test-runner/tests/facade")).facadeTestDef,
+    loadGuided: async () => (await import("@/content/guided/facade")).facadeGuided,
+    loadContent: async () => (await import("@/content/patterns/facade.json")) as unknown as PatternContent,
+  },
+  {
+    slug: "command",
+    solutionSource: SOLUTIONS["command"],
+    solutionPath: "src/content/patterns/__solutions__/command.ts",
+    loadTestDef: async () => (await import("@/lib/test-runner/tests/command")).commandTestDef,
+    loadGuided: async () => (await import("@/content/guided/command")).commandGuided,
+    loadContent: async () => (await import("@/content/patterns/command.json")) as unknown as PatternContent,
+  },
+  {
+    slug: "observer",
+    solutionSource: SOLUTIONS["observer"],
+    solutionPath: "src/content/patterns/__solutions__/observer.ts",
+    loadTestDef: async () => (await import("@/lib/test-runner/tests/observer")).observerTestDef,
+    loadGuided: async () => (await import("@/content/guided/observer")).observerGuided,
+    loadContent: async () => (await import("@/content/patterns/observer.json")) as unknown as PatternContent,
+  },
+  {
+    slug: "state",
+    solutionSource: SOLUTIONS["state"],
+    solutionPath: "src/content/patterns/__solutions__/state.ts",
+    loadTestDef: async () => (await import("@/lib/test-runner/tests/state")).stateTestDef,
+    loadGuided: async () => (await import("@/content/guided/state")).stateGuided,
+    loadContent: async () => (await import("@/content/patterns/state.json")) as unknown as PatternContent,
+  },
 ];
 
 // ─── Per-pattern test factory ─────────────────────────────────────
@@ -323,14 +510,16 @@ function createPatternTests(batch: BatchPattern[]) {
       it(`${entry.slug}: A6 solution passes self-validation`, async () => {
         const testDef = await entry.loadTestDef();
         expect(testDef).toBeDefined();
-        const results = runPartAWithSolution(testDef, entry.solutionSource);
+        const solutionCode = entry.solutionPath ? readSolution(entry.solutionPath) : entry.solutionSource;
+        const results = runPartAWithSolution(testDef, solutionCode);
         const selfVal = results.find((r) => r.check.startsWith("A6:"));
         expect(selfVal?.passed, selfVal?.detail ?? "A6 not found").toBe(true);
       });
 
       it(`${entry.slug}: A2 all checks are valid JS`, async () => {
         const testDef = await entry.loadTestDef();
-        const results = runPartAWithSolution(testDef, entry.solutionSource);
+        const solutionCode = entry.solutionPath ? readSolution(entry.solutionPath) : entry.solutionSource;
+        const results = runPartAWithSolution(testDef, solutionCode);
         const syntaxErrors = results.filter(
           (r) => r.check.startsWith("A2: Criterion") && !r.passed
         );
@@ -339,7 +528,8 @@ function createPatternTests(batch: BatchPattern[]) {
 
       it(`${entry.slug}: A5 no over-specified criteria`, async () => {
         const testDef = await entry.loadTestDef();
-        const results = runPartAWithSolution(testDef, entry.solutionSource);
+        const solutionCode = entry.solutionPath ? readSolution(entry.solutionPath) : entry.solutionSource;
+        const results = runPartAWithSolution(testDef, solutionCode);
         const overSpec = results.filter(
           (r) => r.check.startsWith("A5:") && !r.passed
         );
@@ -425,7 +615,8 @@ describe("Batch 1 — Summary Report", () => {
       ]);
 
       // Part A
-      const aResults = runPartAWithSolution(testDef, entry.solutionSource);
+      const solutionCode = entry.solutionPath ? readSolution(entry.solutionPath) : entry.solutionSource;
+      const aResults = runPartAWithSolution(testDef, solutionCode);
       const aPassed = aResults.filter((r) => r.passed).length;
       const aTotal = aResults.length;
       passedA += aPassed;

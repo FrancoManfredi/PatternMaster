@@ -67,9 +67,10 @@
     "statement": "Implementa un sistema de notificación de precios de acciones usando el patrón Observer donde múltiples inversores reciben notificaciones cuando los precios cambian.",
     "instructions": "Crea un `StockTicker` que mantiene precios de acciones y notifica a los inversores cuando un precio cambia. Cada inversor puede tener diferentes estrategias de reacción: uno puede querer comprar si el precio baja, otro puede querer vender si sube, y otro puede solo querer registrar los cambios.",
     "acceptanceCriteria": [
-      "Crea una interfaz `StockObserver` con el método `update()`.",
-      "Implementa `StockTicker` como subject con `subscribe()`, `unsubscribe()` y `notify()`.",
-      "Crea al menos 2 tipos de observers con comportamientos diferentes (comprador, vendedor, logger).",
+      "Define la clase base `StockObserver` con el método `update(stock, price)`.",
+      "Implementa `StockTicker` como subject con `subscribe()`, `unsubscribe()` y `notifyObservers()`.",
+      "Implementa `Buyer` que extiende `StockObserver` (compra si el precio baja del umbral).",
+      "Implementa `Seller` que extiende `StockObserver` (vende si el precio sube del umbral).",
       "Cuando el precio de una acción cambia, todos los observers suscritos reciben la notificación."
     ],
     "starterCode": "// TODO: Define StockObserver interface with update()\n\n// TODO: Implement StockTicker as subject\n// It should manage subscriptions and notify on price changes\n\n// TODO: Implement at least 2 observer types:\n// - Buyer: buys when price drops below a threshold\n// - Seller: sells when price rises above a threshold\n\nconst ticker = new StockTicker();\nconst buyer = new Buyer('Alice', 100);\nconst seller = new Seller('Bob', 150);\n\nticker.subscribe(buyer);\nticker.subscribe(seller);\n\nticker.setPrice('AAPL', 90);\n// → Buyer Alice sees: 'AAPL at $90 — buying!'\n\nticker.setPrice('AAPL', 160);\n// → Seller Bob sees: 'AAPL at $160 — selling!'"

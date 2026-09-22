@@ -20,10 +20,6 @@
 # production
 /build
 
-# project docs and specs
-/openspec/
-/sdd/
-
 # misc
 .DS_Store
 *.pem

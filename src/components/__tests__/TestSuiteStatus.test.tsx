@@ -108,7 +108,7 @@ describe("TestSuiteStatus", () => {
       ).toBeDefined();
       expect(
         screen.getByText(
-          /Tu código será evaluado por el corrector de IA/
+          /validación es manual/
         )
       ).toBeDefined();
     });

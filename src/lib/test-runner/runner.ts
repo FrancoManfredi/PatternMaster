@@ -17,9 +17,9 @@
  *   the result resolves with sandboxStatus "skipped".
  */
 
-import { transform } from "sucrase";
 import type { TestSuiteResult, PatternTestDef, WorkerMessage } from "./types";
 import { createWorkerSource } from "./sandbox-worker";
+import { stripTS } from "../transforms";
 
 const DEFAULT_TIMEOUT_MS = 5000;
 
@@ -41,35 +41,6 @@ const SUPPORTED_LANGUAGES = new Set([
  */
 export function isSandboxSupported(language: string): boolean {
   return SUPPORTED_LANGUAGES.has(language.toLowerCase());
-}
-
-/**
- * Strips TypeScript syntax from user code using Sucrase.
- * Runs on the main thread before sending code to the Worker.
- * Also strips decorators (Sucrase leaves them as-is) and export/import
- * keywords (Worker uses `new Function`, not module scope).
- */
-function stripTS(code: string): string {
-  // NOTE: Only "typescript" transform — NOT "imports".
-  // "imports" converts `export class Foo {}` to CommonJS `exports.Foo = Foo;`,
-  // but the Worker uses $exports (not exports) as the parameter name for
-  // new Function('$exports', ...). The regex cleanup below handles removing
-  // the `export` keyword from Sucrase's output directly.
-  const result = transform(code, {
-    transforms: ["typescript"],
-  });
-  let js = result.code;
-
-  // Remove export keyword (new Function doesn't support module exports)
-  js = js.replace(/\bexport\s+(default\s+)?/g, "");
-
-  // Remove import statements (worker injects exports itself)
-  js = js.replace(/^import\s+(?:type\s+)?[^;]+;\s*$/gm, "");
-
-  // Strip decorator syntax (@decorator or @decorator(args))
-  js = js.replace(/@\w+(?:\([^)]*\))?\s*/g, "");
-
-  return js.trim();
 }
 
 export interface TestRunnerOptions {

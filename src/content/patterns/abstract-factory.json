@@ -66,11 +66,11 @@
     "statement": "Implementa una Abstract Factory para crear familias de muebles (Victorian, Modern, ArtDeco) donde cada familia tiene silla, mesa y sofá compatibles.",
     "instructions": "Creá una fábrica abstracta `FurnitureFactory` con métodos para crear silla, mesa y sofá. Implementá tres fábricas concretas: Victorian (ornamental, madera oscura), Modern (minimalista, líneas limpias) y ArtDeco (geométrico, dorado). El cliente debe poder crear un mueble completo sin saber qué estilo está usando.",
     "acceptanceCriteria": [
-      "Crea interfaces `Chair`, `Table` y `Sofa` con métodos `render()` y `getStyle()`.",
+      "Crea las clases base `Chair`, `Table` y `Sofa` con métodos `render()` y `getStyle()`.",
       "Implementa las 3 familias concretas (Victorian, Modern, ArtDeco) — 9 clases totales.",
-      "Crea la interfaz `FurnitureFactory` con 3 métodos de creación.",
+      "Crea la clase base `FurnitureFactory` con 3 métodos de creación.",
       "Implementa las 3 fábricas concretas y demuestra uso con un cliente genérico."
     ],
-    "starterCode": "// TODO: Define interfaces Chair, Table, Sofa\n\n// TODO: Create Victorian family (VictorianChair, VictorianTable, VictorianSofa)\n\n// TODO: Create Modern family\n\n// TODO: Create ArtDeco family\n\n// TODO: Define FurnitureFactory interface\n\n// TODO: Implement VictorianFactory, ModernFactory, ArtDecoFactory\n\n// Demo:\nfunction furnishRoom(factory: FurnitureFactory) {\n  const chair = factory.createChair();\n  const table = factory.createTable();\n  const sofa = factory.createSofa();\n  console.log(chair.getStyle(), table.getStyle(), sofa.getStyle());\n}"
+    "starterCode": "// TODO: Define las clases base Chair, Table, Sofa\n\n// TODO: Create Victorian family (VictorianChair, VictorianTable, VictorianSofa)\n\n// TODO: Create Modern family\n\n// TODO: Create ArtDeco family\n\n// TODO: Define la clase base FurnitureFactory\n\n// TODO: Implement VictorianFactory, ModernFactory, ArtDecoFactory\n\n// Demo:\nfunction furnishRoom(factory: FurnitureFactory) {\n  const chair = factory.createChair();\n  const table = factory.createTable();\n  const sofa = factory.createSofa();\n  console.log(chair.getStyle(), table.getStyle(), sofa.getStyle());\n}"
   }
 }

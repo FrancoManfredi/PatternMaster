@@ -5,8 +5,6 @@ import { usePathname } from "next/navigation";
 
 const navItems = [
   { label: "Patrones", path: "/catalogo", activePath: "/catalogo" },
-  { label: "Mi Progreso", path: "/progress", activePath: "/progress" },
-  { label: "Comunidad", path: "/community", activePath: "/community" },
 ];
 
 export default function Header() {

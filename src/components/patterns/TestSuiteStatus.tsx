@@ -73,8 +73,8 @@ export default function TestSuiteStatus({
             </span>
             <span className="flex-1 text-on-surface-variant/80">
               Los tests automáticos deterministas solo están disponibles para
-              TypeScript/JavaScript por ahora. Tu código será evaluado por el
-              corrector de IA.
+              TypeScript/JavaScript por ahora. Para otros lenguajes, la
+              validación es manual.
             </span>
           </div>
         ) : (

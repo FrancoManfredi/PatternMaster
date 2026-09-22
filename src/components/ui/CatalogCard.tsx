@@ -2,6 +2,21 @@
 
 import Link from "next/link";
 import type { PatternContent } from "@/content";
+import { hexToRgba } from "@/lib/colors";
+
+// Map CSS variable references to hex values for hexToRgba
+const VAR_TO_HEX: Record<string, string> = {
+  "var(--color-primary)": "#bef264",
+  "var(--color-secondary)": "#5de6ff",
+  "var(--color-tertiary-fixed-dim)": "#ffb95f",
+  "var(--color-warning-amber)": "#F59E0B",
+  "var(--color-info-cyan)": "#22D3EE",
+  "var(--color-error-red)": "#EF4444",
+};
+
+function resolveHex(color: string): string {
+  return VAR_TO_HEX[color] || color;
+}
 
 interface CatalogCardProps {
   pattern: PatternContent;
@@ -36,21 +51,6 @@ const DIFFICULTY_COLORS: Record<number, string> = {
   2: "var(--color-info-cyan)",
   3: "var(--color-error-red)",
 };
-
-function hexToRgba(hex: string, alpha: number): string {
-  // Handle var() references — extract hex from CSS custom property
-  // For inline use, we'll work with known hex values
-  const colorMap: Record<string, string> = {
-    "var(--color-primary)": "#bef264",
-    "var(--color-secondary)": "#5de6ff",
-    "var(--color-tertiary-fixed-dim)": "#ffb95f",
-  };
-  const resolved = colorMap[hex] || hex;
-  const r = parseInt(resolved.slice(1, 3), 16);
-  const g = parseInt(resolved.slice(3, 5), 16);
-  const b = parseInt(resolved.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
 
 export default function CatalogCard({ pattern }: CatalogCardProps) {
   const meta = CATEGORY_META[pattern.category] || CATEGORY_META.CREACIONAL;

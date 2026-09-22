@@ -8,6 +8,7 @@ import { highlightCode } from "@/lib/syntax-highlight";
 import TestSuiteStatus from "./TestSuiteStatus";
 import GuidedExerciseSection from "./GuidedExerciseSection";
 import { getGuidedExercise } from "@/content/guided";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const LANGUAGES = ["TypeScript", "JavaScript"];
 
@@ -87,45 +88,12 @@ export default function ExerciseSection({ pattern }: ExerciseSectionProps) {
         // Run sandbox tests (TS/JS only)
         try {
           const { runUserTests } = await import("@/lib/test-runner/runner");
+          const { getTestDef } = await import("@/lib/test-runner/registry");
 
-          // Only run sandbox tests if this pattern has a test definition
-          const patternTestDefs: Record<string, () => Promise<unknown>> = {
-            "factory-method": () =>
-              import("@/lib/test-runner/tests/factory-method").then(
-                (m) => m.factoryMethodTestDef
-              ),
-            "singleton": () =>
-              import("@/lib/test-runner/tests/singleton").then(
-                (m) => m.singletonTestDef
-              ),
-            "decorator": () =>
-              import("@/lib/test-runner/tests/decorator").then(
-                (m) => m.decoratorTestDef
-              ),
-            "strategy": () =>
-              import("@/lib/test-runner/tests/strategy").then(
-                (m) => m.strategyTestDef
-              ),
-            "builder": () =>
-              import("@/lib/test-runner/tests/builder").then(
-                (m) => m.builderTestDef
-              ),
-            "adapter": () =>
-              import("@/lib/test-runner/tests/adapter").then(
-                (m) => m.adapterTestDef
-              ),
-            "chain-of-responsibility": () =>
-              import("@/lib/test-runner/tests/chain-of-responsibility").then(
-                (m) => m.chainOfResponsibilityTestDef
-              ),
-            "template-method": () =>
-              import("@/lib/test-runner/tests/template-method").then(
-                (m) => m.templateMethodTestDef
-              ),
-          };
+          const loadTestDef = getTestDef(pattern.slug);
 
-          if (patternTestDefs[pattern.slug]) {
-            const testDef = await patternTestDefs[pattern.slug]();
+          if (loadTestDef) {
+            const testDef = await loadTestDef();
             suiteResult = await runUserTests(code, testDef as any, {
               signal: controller.signal,
             });
@@ -174,7 +142,7 @@ export default function ExerciseSection({ pattern }: ExerciseSectionProps) {
   const lineCount = code.split("\n").length;
 
   return (
-    <>
+    <ErrorBoundary>
       {/* Mode toggle — visible for patterns that have a guided exercise */}
       {hasGuided && (
         <div className="flex justify-end px-[24px] max-w-[1280px] mx-auto mb-2">
@@ -375,7 +343,7 @@ export default function ExerciseSection({ pattern }: ExerciseSectionProps) {
         </div>
       </div>
     </section>
-    )}
-    </>
+      )}
+    </ErrorBoundary>
   );
 }

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { PatternContent } from "@/content";
+import { hexToRgba } from "@/lib/colors";
 
 interface PatternCardProps {
   pattern: PatternContent;
@@ -17,18 +18,6 @@ const ACCENT_HEX: Record<string, string> = {
   "info-cyan": "#22d3ee",
   primary: "#bef264",
 };
-
-function hexToRgba(hex: string, alpha: number): string {
-  const colorMap: Record<string, string> = {
-    "var(--color-info-cyan)": "#22d3ee",
-    "var(--color-primary)": "#bef264",
-  };
-  const resolved = colorMap[hex] || hex;
-  const r = parseInt(resolved.slice(1, 3), 16);
-  const g = parseInt(resolved.slice(3, 5), 16);
-  const b = parseInt(resolved.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
 
 export default function PatternCard({ pattern, progress }: PatternCardProps) {
   const accentKey =

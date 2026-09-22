@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ProgressProvider } from "@/components/ProgressContext";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-headline",
@@ -38,7 +39,9 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-background text-on-surface font-body">
-        <ProgressProvider>{children}</ProgressProvider>
+        <ProgressProvider>
+          <ErrorBoundary>{children}</ErrorBoundary>
+        </ProgressProvider>
       </body>
     </html>
   );
